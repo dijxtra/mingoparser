@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
-import xml.etree.cElementTree as ET
 from collections import defaultdict
+import urllib2
 
 class Postaja:
     def __init__(self, json_in):
@@ -49,33 +49,16 @@ def gen_vlasnike_postaja(tree):
     """Generira dictionary koji mapira postaju sa njenim vlasnikom"""
     vlasnici_postaja = {}
     
-    for item in tree.iter(tag='item'):
-        id = None
-        obveznik = None
-        for child in item:
-            if child.tag == "id_postaja":
-                id = child.text
-            if child.tag == "obveznik":
-                obveznik = child.text
-        if id:
-            vlasnici_postaja[id] = obveznik
+    for vlasnik in tree:
+        vlasnici_postaja[vlasnik["id_postaja"]] = vlasnik["obveznik"]
 
     return vlasnici_postaja
 
 def gen_imena_vlasnika(tree):
     imena_vlasnika = {}
-    
-    for item in tree.iter(tag='item'):
-        postaja_id = None
-        obveznik = None
-        for child in item:
-            if child.tag == "id_obveznik":
-                obveznik_id = child.text
-            if child.tag == "naziv":
-                naziv = child.text
 
-        if obveznik_id:
-            imena_vlasnika[obveznik_id] = naziv
+    for obveznik in tree:
+        imena_vlasnika[obveznik["id_obveznik"]] = obveznik["naziv"]
 
     return imena_vlasnika
 
@@ -109,22 +92,28 @@ def frekvencija_vlasnika(lista_postaja):
 if __name__ == "__main__":
     vrsta_goriva = "2"
     limit = 3
+    obveznik_url = 'http://min-go.hr/api/web_api/web/obveznik'
+    postaja_url = 'http://min-go.hr/api/web_api/web/postaja'
+    cijene_url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
 
-    obveznik_tree = ET.ElementTree(file='obveznik')
-    imena_vlasnika = gen_imena_vlasnika(obveznik_tree)
+    print "Fetching obveznik..."
+    obveznik_json = json.loads(urllib2.urlopen(obveznik_url).read())
+    imena_vlasnika = gen_imena_vlasnika(obveznik_json)
 
-    postaja_tree = ET.ElementTree(file='postaja')
-    vlasnici_postaja = gen_vlasnike_postaja(postaja_tree)
+    print "Fetching postaja..."
+    postaja_json = json.loads(urllib2.urlopen(postaja_url).read())
+    vlasnici_postaja = gen_vlasnike_postaja(postaja_json)
 
-    with open ("vazeca-cijena.html", "r") as myfile:
-        data=myfile.read()
-
-    j = json.loads(data)
+    print "Fetching cijene..."
+    cijene_json = urllib2.urlopen(cijene_url).read()
+    j = json.loads(cijene_json)
     lista_postaja = []
     for postaja in j:
         p = Postaja(postaja)
-        p.set_ime_vlasnika(imena_vlasnika[vlasnici_postaja[p.id()]])
+        p.set_ime_vlasnika(imena_vlasnika[vlasnici_postaja[int(p.id())]])
         lista_postaja.append(p)
+
+    print "Fetching done."
     
     cijene = dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva)
     sortirane_cijene = sorted(cijene.items(), key = lambda x: x[0])

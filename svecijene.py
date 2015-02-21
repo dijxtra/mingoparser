@@ -3,32 +3,33 @@ import json
 import xml.etree.cElementTree as ET
 from collections import defaultdict
 
-def format_cijena(cijena):
-    """Ako je cijena veća od 100, vrati cijenu djeljenu sa 100.
+class Postaja:
+    def __init__(self, json_in):
+        self.nazivi_po_vrsti = {}
+        self.cijene_po_vrsti = {}
+        
+        for c in json_in["cijena"]:
+            self.nazivi_po_vrsti[c["vrsta_goriva"]] = c["naziv"]
 
-    Ako je cijena veća od 100, onda se vrlo vjerojatno radi o cijeni kojoj nedostaje decimalni zarez.
-    """
-    if float(cijena) > 100:
-        return float(cijena) / 100
-    return float(cijena)
+            cijena = float(c["cijena"])
+            if cijena > 100: #Ako je cijena veća od 100, onda se vrlo vjerojatno radi o cijeni kojoj nedostaje decimalni zarez.
+                cijena = cijena / 100
+            self.cijene_po_vrsti[c["vrsta_goriva"]] = cijena
 
-def cijena_vrste_na_postaji(postaja, vrsta_goriva):
-    """Prima json prikaz postaje i oznaku vrste goriva i vraća cijenu tog goriva na toj postaji."""
+    def cijena(self, vrsta_goriva):
+        """Vraća cijenu vrste goriva na postaji."""
+        if vrsta_goriva in self.cijene_po_vrsti:
+            return self.cijene_po_vrsti[vrsta_goriva]
+        else:
+            return None
     
-    for c in postaja["cijena"]:
-        if c["vrsta_goriva"] == vrsta_goriva:
-            return format_cijena(c["cijena"])
+    def ime_goriva(vrsta_goriva):
+        """Vraća ime vrste goriva na postaji."""
+        if vrsta_goriva in self.nazivi_po_vrsti:
+            return self.nazivi_po_vrsti[vrsta_goriva]
+        else:
+            return None
 
-    return None
-    
-def ime_vrste_na_postaji(postaja, vrsta_goriva):
-    """Prima json prikaz postaje i oznaku vrste goriva i vraća cijenu tog goriva na toj postaji."""
-    
-    for c in postaja["cijena"]:
-        if c["vrsta_goriva"] == vrsta_goriva:
-            return c["naziv"]
-
-    return None
 
 def dict_cijena_sa_postajama_za_vrstu(j, vrsta_goriva):
     """Generira dictionary popisa postaja po cijeni vrste goriva.
@@ -38,7 +39,8 @@ def dict_cijena_sa_postajama_za_vrstu(j, vrsta_goriva):
     
     postaje_po_cijenama = {}
     for postaja in j:
-        cijena = cijena_vrste_na_postaji(postaja, vrsta_goriva)
+        p = Postaja(postaja)
+        cijena = p.cijena(vrsta_goriva)
         if cijena in postaje_po_cijenama:
             postaje_po_cijenama[cijena].append(postaja["id_postaja"])
         else:

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import xml.etree.cElementTree as ET
 from collections import defaultdict
@@ -7,7 +8,6 @@ def format_cijena(cijena):
 
     Ako je cijena veća od 100, onda se vrlo vjerojatno radi o cijeni kojoj nedostaje decimalni zarez.
     """
-    
     if float(cijena) > 100:
         return float(cijena) / 100
     return float(cijena)
@@ -30,23 +30,25 @@ def ime_vrste_na_postaji(postaja, vrsta_goriva):
 
     return None
 
-def postaja_po_id(json_data, postaja_id):
-    for postaja in json_data:
-        if postaja["id_postaja"] == postaja_id:
-            return postaja
-
 def dict_cijena_sa_postajama_za_vrstu(j, vrsta_goriva):
-    cijene = {}
-    for postaja in j:
-        cijena = cijena_vrste_na_postaji(postaja, vrsta_goriva)[1]
-        if cijena in cijene:
-            cijene[cijena].append(postaja["id_postaja"])
-        else:
-            cijene[cijena] = [postaja["id_postaja"]]
+    """Generira dictionary popisa postaja po cijeni vrste goriva.
 
-    return cijene
+    Za svaku postaju određuje se cijena za ulaznu vrstu goriva i zatim se dodjeljuje u dictionary pod tom cijenom.
+    """
+    
+    postaje_po_cijenama = {}
+    for postaja in j:
+        cijena = cijena_vrste_na_postaji(postaja, vrsta_goriva)
+        if cijena in postaje_po_cijenama:
+            postaje_po_cijenama[cijena].append(postaja["id_postaja"])
+        else:
+            postaje_po_cijenama[cijena] = [postaja["id_postaja"]]
+
+    return postaje_po_cijenama
 
 def vlasnik_postaje_id(tree, postaja_id):
+    """Za zadani ID postaje izvadi ID vlasnika postaje iz ulaznog ElementTree-a."""
+    
     found_item = None
     for item in tree.iter(tag='item'):
         if found_item :
@@ -63,6 +65,8 @@ def vlasnik_postaje_id(tree, postaja_id):
             return child.text
     
 def obveznik_naziv(tree, id_obveznik):
+    """Za zadani ID postaje izvadi ID vlasnika postaje iz ulaznog ElementTree-a."""
+    
     found_item = None
     for item in tree.iter(tag='item'):
         if found_item :
@@ -79,6 +83,11 @@ def obveznik_naziv(tree, id_obveznik):
         
     
 def frekvencija_vlasnika(lista_postaja):
+    """Prima listu IDova postaja i vraća listu parova (ime vlasnika postaje, frekvencija)
+
+    Prima listu IDova postaja u obliku ['1', '2', '3'] i vraća listu oblika [('Tri', 2), ('Dva', 1)], gdje je 'Tri' ime vlasnika postaja '1' i '2', a 'Dva' je ime vlasnika postaje '3'.
+    """
+    
     vlasnici = map(lambda x: vlasnik_postaje_id(postaja_tree, x), lista_postaja)
 
     d = defaultdict(int)

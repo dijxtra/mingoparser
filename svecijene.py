@@ -44,7 +44,6 @@ class Postaja:
     def set_ime_vlasnika(self, ime_vlasnika_in):
         self._ime_vlasnika = ime_vlasnika_in
 
-
 def gen_vlasnike_postaja(tree):
     """Generira dictionary koji mapira postaju sa njenim vlasnikom"""
     vlasnici_postaja = {}
@@ -61,6 +60,14 @@ def gen_imena_vlasnika(tree):
         imena_vlasnika[obveznik["id_obveznik"]] = obveznik["naziv"]
 
     return imena_vlasnika
+
+def gen_vrste_goriva(json):
+    vrste_goriva = []
+
+    for gorivo in json:
+        vrste_goriva.append([gorivo["id_vrstagoriva"], gorivo["vrsta_goriva"]])
+
+    return vrste_goriva
 
 def dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva):
     """Generira dictionary popisa postaja po cijeni vrste goriva.
@@ -89,22 +96,31 @@ def frekvencija_vlasnika(lista_postaja):
 
     return d.items()
     
-if __name__ == "__main__":
-    vrsta_goriva = "2"
+def vrste_goriva():
+    vrste_url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
+
+    # print "Fetching vrste..."
+    vrste_json = json.loads(urllib2.urlopen(vrste_url).read())
+    vrste_goriva = gen_vrste_goriva(vrste_json)
+    return vrste_goriva
+
+def main(vrsta_goriva = 2):
+    vrsta_goriva = str(vrsta_goriva)
     limit = 3
+
     obveznik_url = 'http://min-go.hr/api/web_api/web/obveznik'
     postaja_url = 'http://min-go.hr/api/web_api/web/postaja'
     cijene_url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
 
-    print "Fetching obveznik..."
+    # print "Fetching obveznik..."
     obveznik_json = json.loads(urllib2.urlopen(obveznik_url).read())
     imena_vlasnika = gen_imena_vlasnika(obveznik_json)
 
-    print "Fetching postaja..."
+    # print "Fetching postaja..."
     postaja_json = json.loads(urllib2.urlopen(postaja_url).read())
     vlasnici_postaja = gen_vlasnike_postaja(postaja_json)
 
-    print "Fetching cijene..."
+    # print "Fetching cijene..."
     cijene_json = urllib2.urlopen(cijene_url).read()
     j = json.loads(cijene_json)
     lista_postaja = []
@@ -118,10 +134,19 @@ if __name__ == "__main__":
     cijene = dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva)
     sortirane_cijene = sorted(cijene.items(), key = lambda x: x[0])
 
+    cijene_sa_vlasnicima = []
     for (cijena, postaje) in sortirane_cijene:
         if not cijena:
             continue
         freq = frekvencija_vlasnika(postaje)
         filtered_freq = sorted(filter(lambda x: x[1] > limit, freq), key = lambda x: -x[1])
         if filtered_freq:
-            print cijena, filtered_freq
+            cijene_sa_vlasnicima.append((cijena, filtered_freq))
+
+    return cijene_sa_vlasnicima
+
+    # for c in cijene_sa_vlasnicima:
+    #     print c
+
+if __name__ == "__main__":
+    main()

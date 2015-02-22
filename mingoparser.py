@@ -106,7 +106,7 @@ def vrste_goriva():
 
 def main(vrsta_goriva = 2):
     vrsta_goriva = str(vrsta_goriva)
-    limit = 3
+    limit = 0
 
     obveznik_url = 'http://min-go.hr/api/web_api/web/obveznik'
     postaja_url = 'http://min-go.hr/api/web_api/web/postaja'
@@ -129,7 +129,7 @@ def main(vrsta_goriva = 2):
         p.set_ime_vlasnika(imena_vlasnika[vlasnici_postaja[int(p.id())]])
         lista_postaja.append(p)
 
-    print "Fetching done."
+    # print "Fetching done."
     
     cijene = dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva)
     sortirane_cijene = sorted(cijene.items(), key = lambda x: x[0])

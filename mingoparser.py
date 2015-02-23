@@ -92,6 +92,30 @@ class Postaja:
     def set_ime_vlasnika(self, ime_vlasnika_in):
         self._ime_vlasnika = ime_vlasnika_in
 
+class Vlasnik:
+    def __init__(self, ime):
+        self._ime = ime
+        self._lista_cijena = []
+        
+    def ime(self):
+        return self._ime
+        
+    def cijene(self):
+        return self._lista_cijena
+
+    def dodaj_cijenu(self, cijena, broj_postaja):
+        self._lista_cijena.append((cijena, broj_postaja))
+
+    def index(self):
+        i = 0
+        br = 0
+        
+        for (cijena, broj_postaja) in self._lista_cijena:
+            i += cijena * broj_postaja
+            br += broj_postaja
+            
+        return i / br
+
 def gen_vlasnike_postaja(tree):
     """Generira dictionary koji mapira postaju sa njenim vlasnikom"""
     vlasnici_postaja = {}
@@ -190,10 +214,10 @@ def gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima):
     for cijena, vlasnici in cijene_sa_vlasnicima:
         for vlasnik in vlasnici:
             if not vlasnik[0] in vlasnici_sa_cijenama:
-                vlasnici_sa_cijenama[vlasnik[0]] = []
-            vlasnici_sa_cijenama[vlasnik[0]].append((cijena, vlasnik[1]))
+                vlasnici_sa_cijenama[vlasnik[0]] = Vlasnik(vlasnik[0])
+            vlasnici_sa_cijenama[vlasnik[0]].dodaj_cijenu(cijena, vlasnik[1])
 
-    vlasnici_sa_cijenama = sorted(vlasnici_sa_cijenama.items(), key=lambda x: x[0])
+    vlasnici_sa_cijenama = sorted(vlasnici_sa_cijenama.values(), key=lambda x: x.ime())
     return vlasnici_sa_cijenama
             
 
@@ -206,5 +230,5 @@ if __name__ == "__main__":
 
     print "--------------"
     
-    for c in vlasnici_sa_cijenama:
-        print c
+    for vlasnik in vlasnici_sa_cijenama:
+        print vlasnik.ime(), vlasnik.cijene(), format("%.2f" % vlasnik.index())

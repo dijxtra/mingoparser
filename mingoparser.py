@@ -150,6 +150,9 @@ def vrste_goriva():
     return vrste_goriva
 
 def main(vrsta_goriva = 2, limit = 0):
+    return gen_cijene_sa_vlasnicima(vrsta_goriva, limit)
+    
+def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
     vrsta_goriva = str(vrsta_goriva)
 
     obveznik_json = load_obveznik()
@@ -182,7 +185,7 @@ def main(vrsta_goriva = 2, limit = 0):
     return cijene_sa_vlasnicima
 
 if __name__ == "__main__":
-    cijene_sa_vlasnicima = main(limit = 4)
+    cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(limit = 4)
 
     for c in cijene_sa_vlasnicima:
         print c

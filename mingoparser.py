@@ -184,8 +184,27 @@ def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
 
     return cijene_sa_vlasnicima
 
+def gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima):
+    vlasnici_sa_cijenama = {}
+    
+    for cijena, vlasnici in cijene_sa_vlasnicima:
+        for vlasnik in vlasnici:
+            if not vlasnik[0] in vlasnici_sa_cijenama:
+                vlasnici_sa_cijenama[vlasnik[0]] = []
+            vlasnici_sa_cijenama[vlasnik[0]].append((cijena, vlasnik[1]))
+
+    vlasnici_sa_cijenama = sorted(vlasnici_sa_cijenama.items(), key=lambda x: x[0])
+    return vlasnici_sa_cijenama
+            
+
 if __name__ == "__main__":
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(limit = 4)
+    vlasnici_sa_cijenama = gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima)
 
     for c in cijene_sa_vlasnicima:
+        print c
+
+    print "--------------"
+    
+    for c in vlasnici_sa_cijenama:
         print c

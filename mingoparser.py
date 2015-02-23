@@ -3,6 +3,45 @@ import json
 from collections import defaultdict
 import urllib2
 
+ONLINE = False
+
+def load_vrste():
+    if (ONLINE):
+        url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
+        return json.loads(urllib2.urlopen(url).read())
+    else:
+        file_name = 'inputs/vrste-goriva'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+def load_obveznik():
+    if (ONLINE):
+        url = 'http://min-go.hr/api/web_api/web/obveznik'
+        return json.loads(urllib2.urlopen(url).read())
+    else:
+        file_name = 'inputs/obveznik'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+def load_postaja():
+    if (ONLINE):
+        url = 'http://min-go.hr/api/web_api/web/postaja'
+        return json.loads(urllib2.urlopen(url).read())
+    else:
+        file_name = 'inputs/postaja'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+def load_cijene():
+    if (ONLINE):
+        url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
+        return urllib2.urlopen(url).read()
+    else:
+        file_name = 'inputs/vazeca-cijena'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+
 class Postaja:
     def __init__(self, json_in):
         self._id = json_in["id_postaja"]
@@ -97,34 +136,22 @@ def frekvencija_vlasnika(lista_postaja):
     return d.items()
     
 def vrste_goriva():
-    vrste_url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
-
-    # print "Fetching vrste..."
-    vrste_json = json.loads(urllib2.urlopen(vrste_url).read())
+    vrste_json = load_vrste()
     vrste_goriva = gen_vrste_goriva(vrste_json)
     return vrste_goriva
 
-def main(vrsta_goriva = 2):
+def main(vrsta_goriva = 2, limit = 0):
     vrsta_goriva = str(vrsta_goriva)
-    limit = 0
 
-    obveznik_url = 'http://min-go.hr/api/web_api/web/obveznik'
-    postaja_url = 'http://min-go.hr/api/web_api/web/postaja'
-    cijene_url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
-
-    # print "Fetching obveznik..."
-    obveznik_json = json.loads(urllib2.urlopen(obveznik_url).read())
+    obveznik_json = load_obveznik()
     imena_vlasnika = gen_imena_vlasnika(obveznik_json)
 
-    # print "Fetching postaja..."
-    postaja_json = json.loads(urllib2.urlopen(postaja_url).read())
+    postaja_json = load_postaja()
     vlasnici_postaja = gen_vlasnike_postaja(postaja_json)
 
-    # print "Fetching cijene..."
-    cijene_json = urllib2.urlopen(cijene_url).read()
-    j = json.loads(cijene_json)
+    cijene_json = load_cijene()
     lista_postaja = []
-    for postaja in j:
+    for postaja in cijene_json:
         p = Postaja(postaja)
         p.set_ime_vlasnika(imena_vlasnika[vlasnici_postaja[int(p.id())]])
         lista_postaja.append(p)
@@ -139,14 +166,14 @@ def main(vrsta_goriva = 2):
         if not cijena:
             continue
         freq = frekvencija_vlasnika(postaje)
-        filtered_freq = sorted(filter(lambda x: x[1] > limit, freq), key = lambda x: -x[1])
+        filtered_freq = sorted(filter(lambda x: x[1] >= limit, freq), key = lambda x: -x[1])
         if filtered_freq:
             cijene_sa_vlasnicima.append((cijena, filtered_freq))
 
     return cijene_sa_vlasnicima
 
-    # for c in cijene_sa_vlasnicima:
-    #     print c
-
 if __name__ == "__main__":
-    main()
+    cijene_sa_vlasnicima = main(limit = 4)
+
+    for c in cijene_sa_vlasnicima:
+        print c

@@ -2,15 +2,24 @@
 import json
 from collections import defaultdict
 import urllib2
+import os
 
 ONLINE = False
+
+def path():
+    dirname = os.path.dirname(__file__)
+    
+    if dirname == '':
+        return ''
+    else:
+        return dirname + '/'
 
 def load_vrste():
     if (ONLINE):
         url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
         return json.loads(urllib2.urlopen(url).read())
     else:
-        file_name = 'inputs/vrste-goriva'
+        file_name = path() + 'inputs/vrste-goriva'
         with open(file_name) as f:
             return json.loads(f.read())
 
@@ -19,7 +28,7 @@ def load_obveznik():
         url = 'http://min-go.hr/api/web_api/web/obveznik'
         return json.loads(urllib2.urlopen(url).read())
     else:
-        file_name = 'inputs/obveznik'
+        file_name = path() + 'inputs/obveznik'
         with open(file_name) as f:
             return json.loads(f.read())
 
@@ -28,7 +37,7 @@ def load_postaja():
         url = 'http://min-go.hr/api/web_api/web/postaja'
         return json.loads(urllib2.urlopen(url).read())
     else:
-        file_name = 'inputs/postaja'
+        file_name = path() + 'inputs/postaja'
         with open(file_name) as f:
             return json.loads(f.read())
 
@@ -37,7 +46,7 @@ def load_cijene():
         url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
         return urllib2.urlopen(url).read()
     else:
-        file_name = 'inputs/vazeca-cijena'
+        file_name = path() + 'inputs/vazeca-cijena'
         with open(file_name) as f:
             return json.loads(f.read())
 

@@ -12,8 +12,7 @@ mingoparser je u pre-alpha fazi
 
 ### Roadmap
 1. pisanje unit testova za postojeći kod
-1. implementiranje klase Tvrtka koja će sadrži sve cijene pojedine vrste goriva za jednu tvrtku
-1. izračun indexa cijene goriva: izračun ponderirane prosječne cijene pojedine vrste goriva za svaku tvrtku i hrvatsku u cijelini
+1. izračun ponderirane prosječne cijene pojedine vrste goriva za hrvatsku u cijelini
 1. upisivanje vrijednosti indexa u SQL bazu (za praćenje trendova)
 1. ispis postaja pojedine tvrtke koje imaju istu cijenu
 

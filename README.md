@@ -3,7 +3,9 @@ A python library consuming min-go.hr API.
 
 [min-go.hr](http://min-go.hr/) je portal koji na osnovi lokacije korisnika određuje benzinske postaje sa najjeftinijim gorivom.
 
-mingoparser je python biblioteka koja dohvaća i obrađuje podatke sa portala min-go.hr, te omogućava korištenje tih podataka u python aplikacijama, kao što je, primjerice, projekt [https://github.com/dijxtra/indexgoriva](indexgoriva)
+mingoparser je python biblioteka koja dohvaća i obrađuje podatke sa portala min-go.hr, te omogućava korištenje tih podataka u python aplikacijama, kao što je, primjerice, projekt [https://github.com/dijxtra/indexgoriva](indexgoriva).
+
+Projekt je započet na [Code for Croatia](http://codeforcroatia.org/) hackatronu 21.2.2015.
 
 ### Status projekta
 mingoparser je u pre-alpha fazi

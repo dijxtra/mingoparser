@@ -229,8 +229,8 @@ if __name__ == "__main__":
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(limit = 4)
     vlasnici_sa_cijenama = gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima)
 
-    for c in cijene_sa_vlasnicima:
-        print c[0], map(lambda x: (x[0].ime(), x[1]), c[1])
+    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima:
+        print cijena, map(lambda x: (x[0].ime(), x[1]), lista_vlasnika)
 
     print "--------------"
     

@@ -86,16 +86,20 @@ class Postaja:
         else:
             return None
 
-    def ime_vlasnika(self):
-        return self._ime_vlasnika
+    def vlasnik(self):
+        return self._vlasnik
 
-    def set_ime_vlasnika(self, ime_vlasnika_in):
-        self._ime_vlasnika = ime_vlasnika_in
+    def set_vlasnik(self, vlasnik_in):
+        self._vlasnik = vlasnik_in
 
 class Vlasnik:
-    def __init__(self, ime):
+    def __init__(self, id, ime):
+        self._id = id
         self._ime = ime
         self._lista_cijena = []
+        
+    def id(self):
+        return self._id
         
     def ime(self):
         return self._ime
@@ -129,7 +133,7 @@ def gen_imena_vlasnika(tree):
     imena_vlasnika = {}
 
     for obveznik in tree:
-        imena_vlasnika[obveznik["id_obveznik"]] = obveznik["naziv"]
+        imena_vlasnika[obveznik["id_obveznik"]] = Vlasnik(obveznik["id_obveznik"], obveznik["naziv"])
 
     return imena_vlasnika
 
@@ -160,7 +164,7 @@ def dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva):
 def frekvencija_vlasnika(lista_postaja):
     """Prima listu postaja i vraća listu parova (ime vlasnika postaje, frekvencija)"""
     
-    vlasnici = map(lambda x: x.ime_vlasnika(), lista_postaja)
+    vlasnici = map(lambda x: x.vlasnik(), lista_postaja)
 
     d = defaultdict(int)
     for k in vlasnici:
@@ -189,7 +193,7 @@ def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
     lista_postaja = []
     for postaja in cijene_json:
         p = Postaja(postaja)
-        p.set_ime_vlasnika(imena_vlasnika[vlasnici_postaja[int(p.id())]])
+        p.set_vlasnik(imena_vlasnika[vlasnici_postaja[int(p.id())]])
         lista_postaja.append(p)
 
     # print "Fetching done."
@@ -212,10 +216,10 @@ def gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima):
     vlasnici_sa_cijenama = {}
     
     for cijena, vlasnici in cijene_sa_vlasnicima:
-        for vlasnik in vlasnici:
-            if not vlasnik[0] in vlasnici_sa_cijenama:
-                vlasnici_sa_cijenama[vlasnik[0]] = Vlasnik(vlasnik[0])
-            vlasnici_sa_cijenama[vlasnik[0]].dodaj_cijenu(cijena, vlasnik[1])
+        for (vlasnik, broj_postaja) in vlasnici:
+            if not vlasnik.ime() in vlasnici_sa_cijenama:
+                vlasnici_sa_cijenama[vlasnik.ime()] = vlasnik
+            vlasnici_sa_cijenama[vlasnik.ime()].dodaj_cijenu(cijena, broj_postaja)
 
     vlasnici_sa_cijenama = sorted(vlasnici_sa_cijenama.values(), key=lambda x: x.ime())
     return vlasnici_sa_cijenama
@@ -226,7 +230,7 @@ if __name__ == "__main__":
     vlasnici_sa_cijenama = gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima)
 
     for c in cijene_sa_vlasnicima:
-        print c
+        print c[0], map(lambda x: (x[0].ime(), x[1]), c[1])
 
     print "--------------"
     

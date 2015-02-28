@@ -236,3 +236,15 @@ if __name__ == "__main__":
     
     for vlasnik in vlasnici_sa_cijenama:
         print vlasnik.ime(), vlasnik.cijene(), format("%.2f" % vlasnik.index())
+
+    print "--------------"
+
+    hrvatska = Vlasnik(0, "Hrvatska")
+
+    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima:
+        ukupno_postaja = 0
+        for (vlasnik, broj_postaja) in lista_vlasnika:
+            ukupno_postaja += broj_postaja
+        hrvatska.dodaj_cijenu(cijena, ukupno_postaja)
+
+    print hrvatska.ime(), format("%.3f" % hrvatska.index())

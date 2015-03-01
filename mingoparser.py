@@ -224,7 +224,17 @@ def gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima):
     vlasnici_sa_cijenama = sorted(vlasnici_sa_cijenama.values(), key=lambda x: x.ime())
     return vlasnici_sa_cijenama
             
+def gen_hrvatska(cijene_sa_vlasnicima):
+    hrvatska = Vlasnik(0, "Hrvatska")
 
+    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima:
+        ukupno_postaja = 0
+        for (vlasnik, broj_postaja) in lista_vlasnika:
+            ukupno_postaja += broj_postaja
+        hrvatska.dodaj_cijenu(cijena, ukupno_postaja)
+
+    return hrvatska
+    
 if __name__ == "__main__":
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(limit = 4)
     vlasnici_sa_cijenama = gen_vlasnici_sa_cijenama(cijene_sa_vlasnicima)
@@ -239,12 +249,6 @@ if __name__ == "__main__":
 
     print "--------------"
 
-    hrvatska = Vlasnik(0, "Hrvatska")
-
-    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima:
-        ukupno_postaja = 0
-        for (vlasnik, broj_postaja) in lista_vlasnika:
-            ukupno_postaja += broj_postaja
-        hrvatska.dodaj_cijenu(cijena, ukupno_postaja)
+    hrvatska = gen_hrvatska(cijene_sa_vlasnicima)
 
     print hrvatska.ime(), format("%.3f" % hrvatska.index())

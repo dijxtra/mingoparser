@@ -99,7 +99,6 @@ class Vlasnik:
     def __init__(self, id, ime):
         self._id = id
         self._ime = ime
-        self._lista_cijena = []
         self._lista_postaja = []
         self._cijene_sa_brojem_postaja = {}
         
@@ -109,17 +108,26 @@ class Vlasnik:
     def ime(self):
         return self._ime
         
-    def cijene(self):
-        return self._lista_cijena
-
-    def dodaj_cijenu(self, cijena, broj_postaja):
-        self._lista_cijena.append((cijena, broj_postaja))
+    def dodaj_cijenu(self, vrsta_goriva, cijena, broj_postaja):
+        if not vrsta_goriva in self._cijene_sa_brojem_postaja:
+            self._cijene_sa_brojem_postaja[vrsta_goriva] = {}
+        if not cijena in self._cijene_sa_brojem_postaja[vrsta_goriva]:
+            self._cijene_sa_brojem_postaja[vrsta_goriva][cijena] = 0
+        self._cijene_sa_brojem_postaja[vrsta_goriva][cijena] += broj_postaja
 
     def dodaj_postaju(self, postaja):
         self._lista_postaja.append(postaja)
 
-    def broj_postaja(self):
-        return len(self._lista_postaja)
+    def broj_postaja(self, vrsta_goriva = None):
+        if not vrsta_goriva:
+            return len(self._lista_postaja)
+            
+        konacni_broj_postaja = 0
+        if vrsta_goriva in self._cijene_sa_brojem_postaja:
+            for broj_postaja in self._cijene_sa_brojem_postaja[vrsta_goriva].values():
+                konacni_broj_postaja += broj_postaja
+                
+        return konacni_broj_postaja
 
     def gen_cijene_sa_brojem_postaja(self):
         self._cijene_sa_brojem_postaja = {}
@@ -127,11 +135,7 @@ class Vlasnik:
             vgsc = postaja.vrste_goriva_sa_cijenom()
             for vrsta_goriva in vgsc:
                 cijena = vgsc[vrsta_goriva]
-                if not int(vrsta_goriva) in self._cijene_sa_brojem_postaja:
-                    self._cijene_sa_brojem_postaja[int(vrsta_goriva)] = {}
-                if not cijena in self._cijene_sa_brojem_postaja[int(vrsta_goriva)]:
-                    self._cijene_sa_brojem_postaja[int(vrsta_goriva)][cijena] = 0
-                self._cijene_sa_brojem_postaja[int(vrsta_goriva)][cijena] += 1
+                self.dodaj_cijenu(int(vrsta_goriva), cijena, 1)
 
     def cijene_sa_brojem_postaja(self, vrsta_goriva):
         if vrsta_goriva in self._cijene_sa_brojem_postaja:
@@ -139,6 +143,9 @@ class Vlasnik:
         else:
             return {}
 
+    def vrste_goriva(self):
+        return self._cijene_sa_brojem_postaja.keys()
+        
     def nudi_gorivo(self, vrsta_goriva):
         if vrsta_goriva in self._cijene_sa_brojem_postaja:
             return True
@@ -154,21 +161,10 @@ class Vlasnik:
                 broj_postaja = self._cijene_sa_brojem_postaja[vrsta_goriva][cijena]
                 i += cijena * broj_postaja
                 br += broj_postaja
-                print br
 
             self._indeksi[vrsta_goriva] = i / br
                     
             
-    def index(self):
-        i = 0
-        br = 0
-        
-        for (cijena, broj_postaja) in self._lista_cijena:
-            i += cijena * broj_postaja
-            br += broj_postaja
-            
-        return i / br
-
     def indeks(self, vrsta_goriva):
         if vrsta_goriva in self._indeksi:
             return self._indeksi[vrsta_goriva]
@@ -291,25 +287,24 @@ def gen_vlasnici_full():
         vlasnik.gen_cijene_sa_brojem_postaja()
         vlasnik.gen_indeksi()
 
-    
-    for vlasnik in vlasnici.values():
-        print vlasnik.ime(), vlasnik._cijene_sa_brojem_postaja
-
     return vlasnici
 
-def gen_hrvatska(cijene_sa_vlasnicima):
+def gen_hrvatska(vlasnici):
     hrvatska = Vlasnik(0, "Hrvatska")
 
-    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima:
-        ukupno_postaja = 0
-        for (vlasnik, broj_postaja) in lista_vlasnika:
-            ukupno_postaja += broj_postaja
-        hrvatska.dodaj_cijenu(cijena, ukupno_postaja)
+    for vlasnik in vlasnici.values():
+        for vrsta_goriva in vlasnik.vrste_goriva():
+            cijena = vlasnik.indeks(vrsta_goriva)
+            broj_postaja = vlasnik.broj_postaja(vrsta_goriva)
+            hrvatska.dodaj_cijenu(vrsta_goriva, cijena, broj_postaja)
+
+    hrvatska.gen_indeksi()
 
     return hrvatska
     
 if __name__ == "__main__":
     limit = 4
+    vrsta_goriva = 2
     vlasnici = gen_vlasnici_full()
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(limit = limit)
@@ -322,11 +317,11 @@ if __name__ == "__main__":
     sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
     for vlasnik in sortirani_vlasnici:
         if vlasnik.broj_postaja() >= limit:
-            if vlasnik.nudi_gorivo(2):
-                print vlasnik.ime(), vlasnik.cijene_sa_brojem_postaja(2), format("%.2f" % vlasnik.indeks(2))
+            if vlasnik.nudi_gorivo(vrsta_goriva):
+                print vlasnik.ime(), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva), format("%.2f" % vlasnik.indeks(vrsta_goriva))
 
     print "--------------"
 
-    hrvatska = gen_hrvatska(cijene_sa_vlasnicima)
+    hrvatska = gen_hrvatska(vlasnici)
 
-    print hrvatska.ime(), format("%.3f" % hrvatska.index())
+    print hrvatska.ime(), format("%.3f" % hrvatska.indeks(vrsta_goriva))

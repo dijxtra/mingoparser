@@ -196,72 +196,27 @@ def gen_vrste_goriva(json):
 
     return vrste_goriva
 
-def dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva):
-    """Generira dictionary popisa postaja po cijeni vrste goriva.
-
-    Za svaku postaju određuje se cijena za ulaznu vrstu goriva i zatim se dodjeljuje u dictionary pod tom cijenom.
-    """
-    
-    postaje_po_cijenama = {}
-    for postaja in lista_postaja:
-        cijena = postaja.cijena(vrsta_goriva)
-        if cijena in postaje_po_cijenama:
-            postaje_po_cijenama[cijena].append(postaja)
-        else:
-            postaje_po_cijenama[cijena] = [postaja]
-
-    return postaje_po_cijenama
-    
-def frekvencija_vlasnika(lista_postaja):
-    """Prima listu postaja i vraća listu parova (ime vlasnika postaje, frekvencija)"""
-    
-    vlasnici = map(lambda x: x.vlasnik(), lista_postaja)
-
-    d = defaultdict(int)
-    for k in vlasnici:
-        d[k] += 1
-
-    return d.items()
-    
 def vrste_goriva():
     vrste_json = load_vrste()
     vrste_goriva = gen_vrste_goriva(vrste_json)
     return vrste_goriva
 
-def main(vrsta_goriva = 2, limit = 0):
-    return gen_cijene_sa_vlasnicima(vrsta_goriva, limit)
+def gen_cijene_sa_vlasnicima(vlasnici):
+    cijene_sa_vlasnicima = {}
     
-def gen_cijene_po_postajama():
-    obveznik_json = load_obveznik()
-    vlasnici = gen_vlasnici(obveznik_json)
-
-    postaja_json = load_postaja()
-    vlasnici_postaja = gen_vlasnici_postaja_dict(postaja_json)
-
-    cijene_json = load_cijene()
-    lista_postaja = []
-    for postaja in cijene_json:
-        p = Postaja(postaja)
-        p.set_vlasnik(vlasnici[vlasnici_postaja[int(p.id())]])
-        lista_postaja.append(p)
-
-    # print "Fetching done."
-    return lista_postaja
-    
-def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
-    vrsta_goriva = str(vrsta_goriva)
-
-    lista_postaja = gen_cijene_po_postajama()
-    cijene = dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva)
-
-    cijene_sa_vlasnicima = []
-    for (cijena, postaje) in cijene.items():
-        if not cijena:
-            continue
-        freq = frekvencija_vlasnika(postaje)
-        filtered_freq = sorted(filter(lambda x: x[1] >= limit, freq), key = lambda x: -x[1])
-        if filtered_freq:
-            cijene_sa_vlasnicima.append((cijena, filtered_freq))
+    for vlasnik in vlasnici.values():
+        for vrsta_goriva in vlasnik.vrste_goriva():
+            if vrsta_goriva not in cijene_sa_vlasnicima:
+                cijene_sa_vlasnicima[vrsta_goriva] = {}
+                
+            cijene_sa_brojem_postaja = vlasnik.cijene_sa_brojem_postaja(vrsta_goriva)
+            for cijena in cijene_sa_brojem_postaja:
+                broj_postaja = cijene_sa_brojem_postaja[cijena]
+                cv = cijene_sa_vlasnicima[vrsta_goriva]
+                
+                if not cijena in cv:
+                    cv[cijena] = {}
+                cv[cijena][vlasnik] = broj_postaja
 
     return cijene_sa_vlasnicima
 
@@ -307,10 +262,11 @@ if __name__ == "__main__":
     vrsta_goriva = 2
     vlasnici = gen_vlasnici_full()
 
-    cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(limit = limit)
+    cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 
-    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima:
-        print cijena, map(lambda x: (x[0].ime(), x[1]), lista_vlasnika)
+    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima[vrsta_goriva].iteritems():
+        if filter(lambda (vlasnik, broj_postaja): broj_postaja >= limit, lista_vlasnika.iteritems()):
+            print cijena, filter(lambda (ime, broj_postaja): broj_postaja >= limit, map(lambda (vlasnik, broj_postaja): (vlasnik.ime(), broj_postaja), lista_vlasnika.iteritems()))
 
     print "--------------"
 

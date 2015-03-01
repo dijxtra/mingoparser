@@ -180,9 +180,7 @@ def vrste_goriva():
 def main(vrsta_goriva = 2, limit = 0):
     return gen_cijene_sa_vlasnicima(vrsta_goriva, limit)
     
-def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
-    vrsta_goriva = str(vrsta_goriva)
-
+def gen_cijene_po_postajama():
     obveznik_json = load_obveznik()
     imena_vlasnika = gen_imena_vlasnika(obveznik_json)
 
@@ -197,12 +195,16 @@ def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
         lista_postaja.append(p)
 
     # print "Fetching done."
+    return lista_postaja
     
+def gen_cijene_sa_vlasnicima(vrsta_goriva = 2, limit = 0):
+    vrsta_goriva = str(vrsta_goriva)
+
+    lista_postaja = gen_cijene_po_postajama()
     cijene = dict_cijena_sa_postajama_za_vrstu(lista_postaja, vrsta_goriva)
-    sortirane_cijene = sorted(cijene.items(), key = lambda x: x[0])
 
     cijene_sa_vlasnicima = []
-    for (cijena, postaje) in sortirane_cijene:
+    for (cijena, postaje) in cijene.items():
         if not cijena:
             continue
         freq = frekvencija_vlasnika(postaje)

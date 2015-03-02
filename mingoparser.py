@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
-from collections import defaultdict
 import urllib2
-import os
+import os, io
+import datetime
 
 ONLINE = False
 
@@ -100,6 +100,7 @@ class Vlasnik:
         self._id = id
         self._ime = ime
         self._lista_postaja = []
+        self._indeksi = {}
         self._cijene_sa_brojem_postaja = {}
         
     def id(self):
@@ -170,6 +171,9 @@ class Vlasnik:
             return self._indeksi[vrsta_goriva]
         else:
             return None
+
+    def dodaj_indeks(self, vrsta_goriva, broj_postaja, indeks):
+        self._indeksi[vrsta_goriva] = indeks
 
 def gen_vlasnici_postaja_dict(tree):
     """Generira dictionary koji mapira postaju sa njenim vlasnikom"""
@@ -256,11 +260,55 @@ def gen_hrvatska(vlasnici):
     hrvatska.gen_indeksi()
 
     return hrvatska
-    
+
+class Saver:
+    def pisi_indekse(self, vlasnici, file_name):
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        json_za_upis = []
+        for vlasnik in sortirani_vlasnici:
+            for vrsta_goriva in vlasnik.vrste_goriva():
+                if vlasnik.nudi_gorivo(vrsta_goriva):
+                    json_za_upis.append({
+                        'datetime': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'vlasnik_id': vlasnik.id(),
+                        'vlasnik_ime': vlasnik.ime(),
+                        'vrsta_goriva': vrsta_goriva,
+                        'broj_postaja': vlasnik.broj_postaja(vrsta_goriva),
+                        'indeks': vlasnik.indeks(vrsta_goriva),
+                    })
+
+        with io.open(file_name, 'w', encoding='utf-8') as f:
+            f.write(unicode(json.dumps(json_za_upis)))
+        
+    def citaj_indekse(self, file_name):
+        file_name = path() + 'vlasnici.json'
+        
+        json_za_citanje = []
+        with open(file_name) as f:
+            json_za_citanje = json.loads(f.read())
+
+        vlasnici = []
+        for vlasnik_json in json_za_citanje:
+            vlasnik = Vlasnik(vlasnik_json['vlasnik_id'], vlasnik_json['vlasnik_ime'])
+            vlasnik.dodaj_indeks(
+                vlasnik_json['vrsta_goriva'],
+                vlasnik_json['broj_postaja'],
+                vlasnik_json['indeks'],
+            )                
+            
+        return vlasnici
+
+
 if __name__ == "__main__":
     limit = 4
     vrsta_goriva = 2
     vlasnici = gen_vlasnici_full()
+
+    saver = Saver()
+    saver.pisi_indekse(vlasnici, 'vlasnici.json')
+    vlasnici = saver.citaj_indekse('vlasnici.json')
+    exit()
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 

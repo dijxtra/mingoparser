@@ -77,7 +77,12 @@ class Postaja:
             return self.cijene_po_vrsti[vrsta_goriva]
         else:
             return None
-    
+
+    def prazna(self):
+        if not self.cijene_po_vrsti:
+            return True
+        return False
+            
     def ime_goriva(vrsta_goriva):
         """Vraća ime vrste goriva na postaji."""
         
@@ -121,7 +126,11 @@ class Vlasnik:
 
     def broj_postaja(self, vrsta_goriva = None):
         if not vrsta_goriva:
-            return len(self._lista_postaja)
+            konacni_broj_postaja = 0
+            for postaja in self._lista_postaja:
+                if not postaja.prazna():
+                    konacni_broj_postaja += 1
+            return konacni_broj_postaja
             
         konacni_broj_postaja = 0
         if vrsta_goriva in self._cijene_sa_brojem_postaja:
@@ -236,7 +245,7 @@ def gen_vlasnici_full():
     for postaja in cijene_json:
         p = Postaja(postaja)
         vlasnik = vlasnici[vlasnici_postaja[int(p.id())]]
-        
+
         vlasnik.dodaj_postaju(p)
         p.set_vlasnik(vlasnik)
         
@@ -245,6 +254,14 @@ def gen_vlasnici_full():
     for vlasnik in vlasnici.values():
         vlasnik.gen_cijene_sa_brojem_postaja()
         vlasnik.gen_indeksi()
+
+    vlasnici_mozda_prazni = vlasnici
+    vlasnici = {}
+    
+    for kljuc in vlasnici_mozda_prazni:
+        vlasnik = vlasnici_mozda_prazni[kljuc]
+        if vlasnik.broj_postaja() > 0:
+            vlasnici[vlasnik.id()] = vlasnik
 
     return vlasnici
 
@@ -288,17 +305,39 @@ class Saver:
         with open(file_name) as f:
             json_za_citanje = json.loads(f.read())
 
-        vlasnici = []
+        vlasnici = {}
         for vlasnik_json in json_za_citanje:
-            vlasnik = Vlasnik(vlasnik_json['vlasnik_id'], vlasnik_json['vlasnik_ime'])
+            if vlasnik_json['vlasnik_id'] in vlasnici:
+                vlasnik = vlasnici[vlasnik_json['vlasnik_id']]
+            else:
+                vlasnik = Vlasnik(vlasnik_json['vlasnik_id'], vlasnik_json['vlasnik_ime'])
             vlasnik.dodaj_indeks(
                 vlasnik_json['vrsta_goriva'],
                 vlasnik_json['broj_postaja'],
                 vlasnik_json['indeks'],
-            )                
+            )
+            vlasnici[vlasnik.id()] = vlasnik
             
         return vlasnici
 
+def debug_usporedi_vlasnike(vlasnici, vlasnici2):
+    for key in vlasnici:
+        v1 = vlasnici[key]
+        v2 = vlasnici2[key]
+        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi or v1._cijene_sa_brojem_postaja != v2._cijene_sa_brojem_postaja:
+            print key
+            print vlasnici[key]._cijene_sa_brojem_postaja#__dict__
+            print vlasnici2[key]._cijene_sa_brojem_postaja#__dict__
+            exit()
+    for key in vlasnici2:
+        v1 = vlasnici[key]
+        v2 = vlasnici2[key]
+        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi or v1._cijene_sa_brojem_postaja != v2._cijene_sa_brojem_postaja:
+            print key
+            print vlasnici[key]._cijene_sa_brojem_postaja#__dict__
+            print vlasnici2[key]._cijene_sa_brojem_postaja#__dict__
+            exit()
+    print "Nema razlika"
 
 if __name__ == "__main__":
     limit = 4
@@ -307,7 +346,10 @@ if __name__ == "__main__":
 
     saver = Saver()
     saver.pisi_indekse(vlasnici, 'vlasnici.json')
-    vlasnici = saver.citaj_indekse('vlasnici.json')
+    vlasnici2 = saver.citaj_indekse('vlasnici.json')
+
+    debug_usporedi_vlasnike(vlasnici, vlasnici2)
+
     exit()
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)

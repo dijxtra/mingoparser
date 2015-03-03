@@ -324,18 +324,18 @@ def debug_usporedi_vlasnike(vlasnici, vlasnici2):
     for key in vlasnici:
         v1 = vlasnici[key]
         v2 = vlasnici2[key]
-        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi or v1._cijene_sa_brojem_postaja != v2._cijene_sa_brojem_postaja:
+        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi:
             print key
-            print vlasnici[key]._cijene_sa_brojem_postaja#__dict__
-            print vlasnici2[key]._cijene_sa_brojem_postaja#__dict__
+            print vlasnici[key].__dict__
+            print vlasnici2[key].__dict__
             exit()
     for key in vlasnici2:
         v1 = vlasnici[key]
         v2 = vlasnici2[key]
-        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi or v1._cijene_sa_brojem_postaja != v2._cijene_sa_brojem_postaja:
+        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi:
             print key
-            print vlasnici[key]._cijene_sa_brojem_postaja#__dict__
-            print vlasnici2[key]._cijene_sa_brojem_postaja#__dict__
+            print vlasnici[key].__dict__
+            print vlasnici2[key].__dict__
             exit()
     print "Nema razlika"
 

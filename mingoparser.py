@@ -298,8 +298,25 @@ class Saver:
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
+    def pisi_cijene_s_postajama(self, vlasnici, file_name):
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        json_za_upis = []
+        for vlasnik in sortirani_vlasnici:
+            for vrsta_goriva in vlasnik.vrste_goriva():
+                if vlasnik.nudi_gorivo(vrsta_goriva):
+                    json_za_upis.append({
+                        'datetime': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'vlasnik_id': vlasnik.id(),
+                        'vrsta_goriva': vrsta_goriva,
+                        'cijene_sa_brojem_postaja': vlasnik.cijene_sa_brojem_postaja(vrsta_goriva),
+                    })
+
+        with io.open(file_name, 'w', encoding='utf-8') as f:
+            f.write(unicode(json.dumps(json_za_upis)))
+        
     def citaj_indekse(self, file_name):
-        file_name = path() + 'vlasnici.json'
+        file_name = path() + file_name
         
         json_za_citanje = []
         with open(file_name) as f:
@@ -311,12 +328,29 @@ class Saver:
                 vlasnik = vlasnici[vlasnik_json['vlasnik_id']]
             else:
                 vlasnik = Vlasnik(vlasnik_json['vlasnik_id'], vlasnik_json['vlasnik_ime'])
+                vlasnici[vlasnik.id()] = vlasnik
+
             vlasnik.dodaj_indeks(
                 vlasnik_json['vrsta_goriva'],
                 vlasnik_json['broj_postaja'],
                 vlasnik_json['indeks'],
             )
-            vlasnici[vlasnik.id()] = vlasnik
+            
+        return vlasnici
+
+    def citaj_cijene_s_postajama(self, vlasnici, file_name):
+        file_name = path() + file_name
+        
+        json_za_citanje = []
+        with open(file_name) as f:
+            json_za_citanje = json.loads(f.read())
+
+        for vlasnik_json in json_za_citanje:
+            vlasnik = vlasnici[vlasnik_json['vlasnik_id']]
+
+            for cijena in vlasnik_json['cijene_sa_brojem_postaja']:
+                broj_postaja = vlasnik_json['cijene_sa_brojem_postaja'][cijena]
+                vlasnik.dodaj_cijenu(vlasnik_json['vrsta_goriva'], float(cijena), broj_postaja)
             
         return vlasnici
 
@@ -324,18 +358,18 @@ def debug_usporedi_vlasnike(vlasnici, vlasnici2):
     for key in vlasnici:
         v1 = vlasnici[key]
         v2 = vlasnici2[key]
-        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi:
+        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi or v1._cijene_sa_brojem_postaja != v2._cijene_sa_brojem_postaja:
             print key
-            print vlasnici[key].__dict__
-            print vlasnici2[key].__dict__
+            print vlasnici[key]._cijene_sa_brojem_postaja#__dict__
+            print vlasnici2[key]._cijene_sa_brojem_postaja#__dict__
             exit()
     for key in vlasnici2:
         v1 = vlasnici[key]
         v2 = vlasnici2[key]
-        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi:
+        if v1._ime != v2._ime or v1._id != v2._id or v1._indeksi != v2._indeksi or v1._cijene_sa_brojem_postaja != v2._cijene_sa_brojem_postaja:
             print key
-            print vlasnici[key].__dict__
-            print vlasnici2[key].__dict__
+            print vlasnici[key]._cijene_sa_brojem_postaja#__dict__
+            print vlasnici2[key]._cijene_sa_brojem_postaja#__dict__
             exit()
     print "Nema razlika"
 
@@ -346,11 +380,13 @@ if __name__ == "__main__":
 
     saver = Saver()
     saver.pisi_indekse(vlasnici, 'vlasnici.json')
+    saver.pisi_cijene_s_postajama(vlasnici, 'cijene_s_postajama.json')
     vlasnici2 = saver.citaj_indekse('vlasnici.json')
+    vlasnici2 = saver.citaj_cijene_s_postajama(vlasnici2, 'cijene_s_postajama.json')
 
     debug_usporedi_vlasnike(vlasnici, vlasnici2)
-
     exit()
+    #vlasnici = vlasnici2
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 

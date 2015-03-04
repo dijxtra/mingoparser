@@ -124,7 +124,7 @@ class Vlasnik:
     def dodaj_postaju(self, postaja):
         self._lista_postaja.append(postaja)
 
-    def broj_postaja(self, vrsta_goriva = None):
+    def broj_postaja(self, vrsta_goriva = None, cijena = None):
         if not vrsta_goriva:
             konacni_broj_postaja = 0
             for vrsta_goriva in self._cijene_sa_brojem_postaja:
@@ -135,7 +135,11 @@ class Vlasnik:
             
         konacni_broj_postaja = 0
         if vrsta_goriva in self._cijene_sa_brojem_postaja:
-            for broj_postaja in self._cijene_sa_brojem_postaja[vrsta_goriva].values():
+            for c in self._cijene_sa_brojem_postaja[vrsta_goriva]:
+                broj_postaja = self._cijene_sa_brojem_postaja[vrsta_goriva][c]
+                if cijena:
+                    if cijena != c:
+                        continue
                 konacni_broj_postaja += broj_postaja
                 
         return konacni_broj_postaja
@@ -281,6 +285,7 @@ def gen_hrvatska(vlasnici):
 
 class Saver:
     def pisi_indekse(self, vlasnici, file_name):
+        file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         json_za_upis = []
@@ -300,6 +305,7 @@ class Saver:
             f.write(unicode(json.dumps(json_za_upis)))
         
     def pisi_cijene_s_postajama(self, vlasnici, file_name):
+        file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         json_za_upis = []
@@ -382,11 +388,10 @@ if __name__ == "__main__":
     saver = Saver()
     saver.pisi_indekse(vlasnici, 'vlasnici.json')
     saver.pisi_cijene_s_postajama(vlasnici, 'cijene_s_postajama.json')
-    vlasnici2 = saver.citaj_indekse('vlasnici.json')
-    vlasnici2 = saver.citaj_cijene_s_postajama(vlasnici2, 'cijene_s_postajama.json')
-
-    debug_usporedi_vlasnike(vlasnici, vlasnici2)
-    vlasnici = vlasnici2
+    
+    vlasnici = None
+    vlasnici = saver.citaj_indekse('vlasnici.json')
+    vlasnici = saver.citaj_cijene_s_postajama(vlasnici, 'cijene_s_postajama.json')
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 

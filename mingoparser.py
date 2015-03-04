@@ -127,9 +127,10 @@ class Vlasnik:
     def broj_postaja(self, vrsta_goriva = None):
         if not vrsta_goriva:
             konacni_broj_postaja = 0
-            for postaja in self._lista_postaja:
-                if not postaja.prazna():
-                    konacni_broj_postaja += 1
+            for vrsta_goriva in self._cijene_sa_brojem_postaja:
+                broj_postaja = self.broj_postaja(vrsta_goriva)
+                if konacni_broj_postaja < broj_postaja:
+                    konacni_broj_postaja = broj_postaja
             return konacni_broj_postaja
             
         konacni_broj_postaja = 0
@@ -197,7 +198,7 @@ def gen_vlasnici(tree):
     vlasnici = {}
 
     for obveznik in tree:
-        vlasnici[obveznik["id_obveznik"]] = Vlasnik(obveznik["id_obveznik"], obveznik["naziv"])
+        vlasnici[obveznik["id_obveznik"]] = Vlasnik(obveznik["id_obveznik"], obveznik["naziv"].encode('utf-8'))
 
     return vlasnici
 
@@ -327,7 +328,7 @@ class Saver:
             if vlasnik_json['vlasnik_id'] in vlasnici:
                 vlasnik = vlasnici[vlasnik_json['vlasnik_id']]
             else:
-                vlasnik = Vlasnik(vlasnik_json['vlasnik_id'], vlasnik_json['vlasnik_ime'])
+                vlasnik = Vlasnik(vlasnik_json['vlasnik_id'], vlasnik_json['vlasnik_ime'].encode('utf-8'))
                 vlasnici[vlasnik.id()] = vlasnik
 
             vlasnik.dodaj_indeks(
@@ -385,8 +386,7 @@ if __name__ == "__main__":
     vlasnici2 = saver.citaj_cijene_s_postajama(vlasnici2, 'cijene_s_postajama.json')
 
     debug_usporedi_vlasnike(vlasnici, vlasnici2)
-    exit()
-    #vlasnici = vlasnici2
+    vlasnici = vlasnici2
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 
@@ -398,8 +398,8 @@ if __name__ == "__main__":
 
     sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
     for vlasnik in sortirani_vlasnici:
-        if vlasnik.broj_postaja() >= limit:
-            if vlasnik.nudi_gorivo(vrsta_goriva):
+        if vlasnik.nudi_gorivo(vrsta_goriva):
+            if vlasnik.broj_postaja(vrsta_goriva) >= limit:
                 print vlasnik.ime(), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva), format("%.2f" % vlasnik.indeks(vrsta_goriva))
 
     print "--------------"

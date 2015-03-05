@@ -3,6 +3,7 @@ import json
 import urllib2
 import os, io
 import datetime
+import sqlite3 as lite
 
 ONLINE = False
 
@@ -284,7 +285,7 @@ def gen_hrvatska(vlasnici):
     return hrvatska
 
 class Saver:
-    def pisi_indekse(self, vlasnici, file_name):
+    def pisi_indekse_json(self, vlasnici, file_name):
         file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
@@ -304,7 +305,44 @@ class Saver:
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
-    def pisi_cijene_s_postajama(self, vlasnici, file_name):
+    def pisi_indekse_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()    
+
+            cur.execute("DROP TABLE IF EXISTS indeksi")
+            cur.execute("""CREATE TABLE indeksi(
+datetime TEXT,
+vlasnik_id INT,
+vlasnik_ime TEXT,
+vrsta_goriva INT,
+broj_postaja INT,
+indeks FLOAT
+)""")
+            con.commit()
+
+            json_za_upis = []
+            for vlasnik in sortirani_vlasnici:
+                for vrsta_goriva in vlasnik.vrste_goriva():
+                    if vlasnik.nudi_gorivo(vrsta_goriva):
+                        print vlasnik.ime()
+                        cur.execute("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?, ?)", (
+                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            vlasnik.id(),
+                            vlasnik.ime(),
+                            vrsta_goriva,
+                            vlasnik.broj_postaja(vrsta_goriva),
+                            vlasnik.indeks(vrsta_goriva),
+                        ))
+
+                        con.commit()
+        
+    def pisi_cijene_s_postajama_json(self, vlasnici, file_name):
         file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
@@ -322,7 +360,7 @@ class Saver:
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
-    def citaj_indekse(self, file_name):
+    def citaj_indekse_json(self, file_name):
         file_name = path() + file_name
         
         json_za_citanje = []
@@ -345,7 +383,7 @@ class Saver:
             
         return vlasnici
 
-    def citaj_cijene_s_postajama(self, vlasnici, file_name):
+    def citaj_cijene_s_postajama_json(self, vlasnici, file_name):
         file_name = path() + file_name
         
         json_za_citanje = []
@@ -386,12 +424,13 @@ if __name__ == "__main__":
     vlasnici = gen_vlasnici_full()
 
     saver = Saver()
-    saver.pisi_indekse(vlasnici, 'vlasnici.json')
-    saver.pisi_cijene_s_postajama(vlasnici, 'cijene_s_postajama.json')
+    saver.pisi_indekse_sql(vlasnici, 'mingo.db')
+    exit()
+    saver.pisi_cijene_s_postajama_json(vlasnici, 'cijene_s_postajama.json')
     
     vlasnici = None
-    vlasnici = saver.citaj_indekse('vlasnici.json')
-    vlasnici = saver.citaj_cijene_s_postajama(vlasnici, 'cijene_s_postajama.json')
+    vlasnici = saver.citaj_indekse_json('vlasnici.json')
+    vlasnici = saver.citaj_cijene_s_postajama_json(vlasnici, 'cijene_s_postajama.json')
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 

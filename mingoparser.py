@@ -334,7 +334,7 @@ indeks FLOAT
                         cur.execute("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?, ?)", (
                             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             vlasnik.id(),
-                            vlasnik.ime(),
+                            vlasnik.ime().decode('utf-8'),
                             vrsta_goriva,
                             vlasnik.broj_postaja(vrsta_goriva),
                             vlasnik.indeks(vrsta_goriva),

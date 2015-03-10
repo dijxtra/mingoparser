@@ -326,12 +326,11 @@ indeks FLOAT
 )""")
             con.commit()
 
-            json_za_upis = []
+            redovi_za_upis = []
             for vlasnik in sortirani_vlasnici:
                 for vrsta_goriva in vlasnik.vrste_goriva():
                     if vlasnik.nudi_gorivo(vrsta_goriva):
-                        print vlasnik.ime()
-                        cur.execute("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?, ?)", (
+                        redovi_za_upis.append((
                             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             vlasnik.id(),
                             vlasnik.ime().decode('utf-8'),
@@ -340,7 +339,8 @@ indeks FLOAT
                             vlasnik.indeks(vrsta_goriva),
                         ))
 
-                        con.commit()
+            cur.executemany("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?, ?)", redovi_za_upis)
+            con.commit()
         
     def pisi_cijene_s_postajama_json(self, vlasnici, file_name):
         file_name = path() + file_name
@@ -360,6 +360,44 @@ indeks FLOAT
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
+    def pisi_cijene_s_postajama_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()    
+
+            cur.execute("DROP TABLE IF EXISTS cijene")
+            cur.execute("""CREATE TABLE cijene(
+datetime TEXT,
+vlasnik_id INT,
+vrsta_goriva INT,
+broj_postaja INT,
+cijena FLOAT
+)""")
+            con.commit()
+
+            redovi_za_upis = []
+            for vlasnik in sortirani_vlasnici:
+                for vrsta_goriva in vlasnik.vrste_goriva():
+                    if vlasnik.nudi_gorivo(vrsta_goriva):
+                        cbp = vlasnik.cijene_sa_brojem_postaja(vrsta_goriva)
+                        for cijena in cbp:
+                            broj_postaja = cbp[cijena]
+                        redovi_za_upis.append((
+                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            vlasnik.id(),
+                            vrsta_goriva,
+                            broj_postaja,
+                            cijena
+                        ))
+
+            cur.executemany("INSERT INTO cijene VALUES(?, ?, ?, ?, ?)", redovi_za_upis)
+            con.commit()
+
     def citaj_indekse_json(self, file_name):
         file_name = path() + file_name
         
@@ -383,6 +421,31 @@ indeks FLOAT
             
         return vlasnici
 
+    def citaj_indekse_sql(self, file_name):
+        file_name = path() + file_name
+        vlasnici = {}
+        
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()
+
+            for (datetime, vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks) in con.execute("select * from indeksi"):
+                if vlasnik_id in vlasnici:
+                    vlasnik = vlasnici[vlasnik_id]
+                else:
+                    vlasnik = Vlasnik(vlasnik_id, vlasnik_ime.encode('utf-8'))
+                    vlasnici[vlasnik.id()] = vlasnik
+
+                vlasnik.dodaj_indeks(
+                    vrsta_goriva,
+                    broj_postaja,
+                    indeks,
+                )
+
+        return vlasnici
+
     def citaj_cijene_s_postajama_json(self, vlasnici, file_name):
         file_name = path() + file_name
         
@@ -396,6 +459,21 @@ indeks FLOAT
             for cijena in vlasnik_json['cijene_sa_brojem_postaja']:
                 broj_postaja = vlasnik_json['cijene_sa_brojem_postaja'][cijena]
                 vlasnik.dodaj_cijenu(vlasnik_json['vrsta_goriva'], float(cijena), broj_postaja)
+            
+        return vlasnici
+
+    def citaj_cijene_s_postajama_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
+
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()
+
+            for (datetime, vlasnik_id, vrsta_goriva, broj_postaja, cijena) in con.execute("select * from cijene"):
+                vlasnik = vlasnici[vlasnik_id]
+                vlasnik.dodaj_cijenu(vrsta_goriva, cijena, broj_postaja)
             
         return vlasnici
 
@@ -425,12 +503,11 @@ if __name__ == "__main__":
 
     saver = Saver()
     saver.pisi_indekse_sql(vlasnici, 'mingo.db')
-    exit()
-    saver.pisi_cijene_s_postajama_json(vlasnici, 'cijene_s_postajama.json')
+    saver.pisi_cijene_s_postajama_sql(vlasnici, 'mingo.db')
     
     vlasnici = None
-    vlasnici = saver.citaj_indekse_json('vlasnici.json')
-    vlasnici = saver.citaj_cijene_s_postajama_json(vlasnici, 'cijene_s_postajama.json')
+    vlasnici = saver.citaj_indekse_sql('mingo.db')
+    vlasnici = saver.citaj_cijene_s_postajama_sql(vlasnici, 'mingo.db')
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 

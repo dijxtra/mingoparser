@@ -2,4 +2,4 @@
 *.json
 *.db
 *.pyc
-sqlite3.db
+db.sqlite3

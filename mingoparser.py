@@ -305,14 +305,11 @@ class Saver:
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
-    def pisi_indekse_sql(self, vlasnici, file_name):
+    def kreiraj_tablicu_indeksa(self, file_name):
         file_name = path() + file_name
-        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         con = lite.connect(file_name)
         with con:
-
-            con.row_factory = lite.Row
             cur = con.cursor()    
 
             cur.execute("DROP TABLE IF EXISTS indeksi")
@@ -325,6 +322,16 @@ broj_postaja INT,
 indeks FLOAT
 )""")
             con.commit()
+
+    def pisi_indekse_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()    
 
             redovi_za_upis = []
             for vlasnik in sortirani_vlasnici:
@@ -360,14 +367,11 @@ indeks FLOAT
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
-    def pisi_cijene_s_postajama_sql(self, vlasnici, file_name):
+    def kreiraj_tablicu_cijena(self, file_name):
         file_name = path() + file_name
-        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         con = lite.connect(file_name)
         with con:
-
-            con.row_factory = lite.Row
             cur = con.cursor()    
 
             cur.execute("DROP TABLE IF EXISTS cijene")
@@ -379,6 +383,16 @@ broj_postaja INT,
 cijena FLOAT
 )""")
             con.commit()
+
+    def pisi_cijene_s_postajama_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()    
 
             redovi_za_upis = []
             for vlasnik in sortirani_vlasnici:
@@ -497,9 +511,12 @@ def debug_usporedi_vlasnike(vlasnici, vlasnici2):
     print "Nema razlika"
 
 def pisi_sve_u_sql(ime_baze):
+    saver = Saver()
+    saver.kreiraj_tablicu_indeksa(ime_baze)
+    saver.kreiraj_tablicu_cijena(ime_baze)
+    
     vlasnici = gen_vlasnici_full()
 
-    saver = Saver()
     saver.pisi_indekse_sql(vlasnici, ime_baze)
     saver.pisi_cijene_s_postajama_sql(vlasnici, ime_baze)
 
@@ -508,11 +525,11 @@ if __name__ == "__main__":
     limit = 4
     vrsta_goriva = 2
 
-    pisi_sve_u_sql('mingo.db')
+    pisi_sve_u_sql('db.sqlite3')
 
     saver = Saver()
-    vlasnici = saver.citaj_indekse_sql('mingo.db')
-    vlasnici = saver.citaj_cijene_s_postajama_sql(vlasnici, 'mingo.db')
+    vlasnici = saver.citaj_indekse_sql('db.sqlite3')
+    vlasnici = saver.citaj_cijene_s_postajama_sql(vlasnici, 'db.sqlite3')
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
 

@@ -496,16 +496,21 @@ def debug_usporedi_vlasnike(vlasnici, vlasnici2):
             exit()
     print "Nema razlika"
 
-if __name__ == "__main__":
-    limit = 4
-    vrsta_goriva = 2
+def pisi_sve_u_sql(ime_baze):
     vlasnici = gen_vlasnici_full()
 
     saver = Saver()
-    saver.pisi_indekse_sql(vlasnici, 'mingo.db')
-    saver.pisi_cijene_s_postajama_sql(vlasnici, 'mingo.db')
+    saver.pisi_indekse_sql(vlasnici, ime_baze)
+    saver.pisi_cijene_s_postajama_sql(vlasnici, ime_baze)
+
     
-    vlasnici = None
+if __name__ == "__main__":
+    limit = 4
+    vrsta_goriva = 2
+
+    pisi_sve_u_sql('mingo.db')
+
+    saver = Saver()
     vlasnici = saver.citaj_indekse_sql('mingo.db')
     vlasnici = saver.citaj_cijene_s_postajama_sql(vlasnici, 'mingo.db')
 

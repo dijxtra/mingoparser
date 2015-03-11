@@ -2,7 +2,6 @@
 import json
 import urllib2
 import os, io
-import datetime
 import sqlite3 as lite
 
 ONLINE = False
@@ -314,9 +313,9 @@ class Saver:
 
             cur.execute("DROP TABLE IF EXISTS vlasnici")
             cur.execute("""CREATE TABLE vlasnici(
-datetime TEXT,
 vlasnik_id INT,
-vlasnik_ime TEXT
+vlasnik_ime TEXT,
+datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
             con.commit()
         
@@ -329,11 +328,11 @@ vlasnik_ime TEXT
 
             cur.execute("DROP TABLE IF EXISTS indeksi")
             cur.execute("""CREATE TABLE indeksi(
-datetime TEXT,
 vlasnik_id INT,
 vrsta_goriva INT,
 broj_postaja INT,
-indeks FLOAT
+indeks FLOAT,
+datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
             con.commit()
         
@@ -346,11 +345,11 @@ indeks FLOAT
 
             cur.execute("DROP TABLE IF EXISTS cijene")
             cur.execute("""CREATE TABLE cijene(
-datetime TEXT,
 vlasnik_id INT,
 vrsta_goriva INT,
 broj_postaja INT,
-cijena FLOAT
+cijena FLOAT,
+datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
             con.commit()
 
@@ -368,7 +367,6 @@ cijena FLOAT
             indeksi_za_upis = []
             for vlasnik in sortirani_vlasnici:
                 vlasnici_za_upis.append((
-                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             vlasnik.id(),
                             vlasnik.ime().decode('utf-8'),
                         ))
@@ -376,16 +374,15 @@ cijena FLOAT
                 for vrsta_goriva in vlasnik.vrste_goriva():
                     if vlasnik.nudi_gorivo(vrsta_goriva):
                         indeksi_za_upis.append((
-                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             vlasnik.id(),
                             vrsta_goriva,
                             vlasnik.broj_postaja(vrsta_goriva),
                             vlasnik.indeks(vrsta_goriva),
                         ))
 
-            cur.executemany("INSERT INTO vlasnici VALUES(?, ?, ?)", vlasnici_za_upis)
+            cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
             con.commit()
-            cur.executemany("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?)", indeksi_za_upis)
+            cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
             con.commit()
         
     def pisi_cijene_s_postajama_json(self, vlasnici, file_name):
@@ -424,14 +421,13 @@ cijena FLOAT
                         for cijena in cbp:
                             broj_postaja = cbp[cijena]
                         redovi_za_upis.append((
-                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             vlasnik.id(),
                             vrsta_goriva,
                             broj_postaja,
                             cijena
                         ))
 
-            cur.executemany("INSERT INTO cijene VALUES(?, ?, ?, ?, ?)", redovi_za_upis)
+            cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena) VALUES(?, ?, ?, ?)", redovi_za_upis)
             con.commit()
 
     def citaj_indekse_json(self, file_name):
@@ -467,9 +463,9 @@ cijena FLOAT
             con.row_factory = lite.Row
             cur = con.cursor()
 
-            for (datetime, vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks) in con.execute("""
+            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, datetime) in con.execute("""
             select
-            indeksi.datetime, indeksi.vlasnik_id, vlasnici.vlasnik_ime, indeksi.vrsta_goriva, indeksi.broj_postaja, indeksi.indeks
+            indeksi.vlasnik_id, vlasnici.vlasnik_ime, indeksi.vrsta_goriva, indeksi.broj_postaja, indeksi.indeks, indeksi.datetime
             from indeksi
             join vlasnici
             on indeksi.vlasnik_id = vlasnici.vlasnik_id
@@ -513,7 +509,7 @@ cijena FLOAT
             con.row_factory = lite.Row
             cur = con.cursor()
 
-            for (datetime, vlasnik_id, vrsta_goriva, broj_postaja, cijena) in con.execute("select * from cijene"):
+            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in con.execute("select * from cijene"):
                 vlasnik = vlasnici[vlasnik_id]
                 vlasnik.dodaj_cijenu(vrsta_goriva, cijena, broj_postaja)
             

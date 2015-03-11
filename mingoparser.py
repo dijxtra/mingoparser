@@ -305,6 +305,21 @@ class Saver:
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
         
+    def kreiraj_tablicu_vlasnika(self, file_name):
+        file_name = path() + file_name
+
+        con = lite.connect(file_name)
+        with con:
+            cur = con.cursor()    
+
+            cur.execute("DROP TABLE IF EXISTS vlasnici")
+            cur.execute("""CREATE TABLE vlasnici(
+datetime TEXT,
+vlasnik_id INT,
+vlasnik_ime TEXT
+)""")
+            con.commit()
+        
     def kreiraj_tablicu_indeksa(self, file_name):
         file_name = path() + file_name
 
@@ -316,10 +331,26 @@ class Saver:
             cur.execute("""CREATE TABLE indeksi(
 datetime TEXT,
 vlasnik_id INT,
-vlasnik_ime TEXT,
 vrsta_goriva INT,
 broj_postaja INT,
 indeks FLOAT
+)""")
+            con.commit()
+        
+    def kreiraj_tablicu_cijena(self, file_name):
+        file_name = path() + file_name
+
+        con = lite.connect(file_name)
+        with con:
+            cur = con.cursor()    
+
+            cur.execute("DROP TABLE IF EXISTS cijene")
+            cur.execute("""CREATE TABLE cijene(
+datetime TEXT,
+vlasnik_id INT,
+vrsta_goriva INT,
+broj_postaja INT,
+cijena FLOAT
 )""")
             con.commit()
 
@@ -331,22 +362,30 @@ indeks FLOAT
         with con:
 
             con.row_factory = lite.Row
-            cur = con.cursor()    
+            cur = con.cursor()
 
-            redovi_za_upis = []
+            vlasnici_za_upis = []
+            indeksi_za_upis = []
             for vlasnik in sortirani_vlasnici:
-                for vrsta_goriva in vlasnik.vrste_goriva():
-                    if vlasnik.nudi_gorivo(vrsta_goriva):
-                        redovi_za_upis.append((
+                vlasnici_za_upis.append((
                             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                             vlasnik.id(),
                             vlasnik.ime().decode('utf-8'),
+                        ))
+
+                for vrsta_goriva in vlasnik.vrste_goriva():
+                    if vlasnik.nudi_gorivo(vrsta_goriva):
+                        indeksi_za_upis.append((
+                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            vlasnik.id(),
                             vrsta_goriva,
                             vlasnik.broj_postaja(vrsta_goriva),
                             vlasnik.indeks(vrsta_goriva),
                         ))
 
-            cur.executemany("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?, ?)", redovi_za_upis)
+            cur.executemany("INSERT INTO vlasnici VALUES(?, ?, ?)", vlasnici_za_upis)
+            con.commit()
+            cur.executemany("INSERT INTO indeksi VALUES(?, ?, ?, ?, ?)", indeksi_za_upis)
             con.commit()
         
     def pisi_cijene_s_postajama_json(self, vlasnici, file_name):
@@ -366,23 +405,6 @@ indeks FLOAT
 
         with io.open(file_name, 'w', encoding='utf-8') as f:
             f.write(unicode(json.dumps(json_za_upis)))
-        
-    def kreiraj_tablicu_cijena(self, file_name):
-        file_name = path() + file_name
-
-        con = lite.connect(file_name)
-        with con:
-            cur = con.cursor()    
-
-            cur.execute("DROP TABLE IF EXISTS cijene")
-            cur.execute("""CREATE TABLE cijene(
-datetime TEXT,
-vlasnik_id INT,
-vrsta_goriva INT,
-broj_postaja INT,
-cijena FLOAT
-)""")
-            con.commit()
 
     def pisi_cijene_s_postajama_sql(self, vlasnici, file_name):
         file_name = path() + file_name
@@ -445,7 +467,13 @@ cijena FLOAT
             con.row_factory = lite.Row
             cur = con.cursor()
 
-            for (datetime, vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks) in con.execute("select * from indeksi"):
+            for (datetime, vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks) in con.execute("""
+            select
+            indeksi.datetime, indeksi.vlasnik_id, vlasnici.vlasnik_ime, indeksi.vrsta_goriva, indeksi.broj_postaja, indeksi.indeks
+            from indeksi
+            join vlasnici
+            on indeksi.vlasnik_id = vlasnici.vlasnik_id
+            """):
                 if vlasnik_id in vlasnici:
                     vlasnik = vlasnici[vlasnik_id]
                 else:
@@ -512,6 +540,7 @@ def debug_usporedi_vlasnike(vlasnici, vlasnici2):
 
 def pisi_sve_u_sql(ime_baze):
     saver = Saver()
+    saver.kreiraj_tablicu_vlasnika(ime_baze)
     saver.kreiraj_tablicu_indeksa(ime_baze)
     saver.kreiraj_tablicu_cijena(ime_baze)
     

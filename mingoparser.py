@@ -509,7 +509,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             con.row_factory = lite.Row
             cur = con.cursor()
 
-            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in con.execute("select * from cijene"):
+            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in con.execute("select vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime from cijene"):
                 vlasnik = vlasnici[vlasnik_id]
                 vlasnik.dodaj_cijenu(vrsta_goriva, cijena, broj_postaja)
             

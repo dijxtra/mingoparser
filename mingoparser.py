@@ -353,7 +353,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
             con.commit()
 
-    def pisi_indekse_sql(self, vlasnici, file_name):
+    def pisi_vlasnike_sql(self, vlasnici, file_name):
         file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
@@ -364,13 +364,27 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             cur = con.cursor()
 
             vlasnici_za_upis = []
-            indeksi_za_upis = []
             for vlasnik in sortirani_vlasnici:
                 vlasnici_za_upis.append((
                             vlasnik.id(),
                             vlasnik.ime().decode('utf-8'),
                         ))
 
+            cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
+            con.commit()
+
+    def pisi_indekse_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
+        sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()
+
+            indeksi_za_upis = []
+            for vlasnik in sortirani_vlasnici:
                 for vrsta_goriva in vlasnik.vrste_goriva():
                     if vlasnik.nudi_gorivo(vrsta_goriva):
                         indeksi_za_upis.append((
@@ -380,8 +394,6 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             vlasnik.indeks(vrsta_goriva),
                         ))
 
-            cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
-            con.commit()
             cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
             con.commit()
         
@@ -453,9 +465,31 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             
         return vlasnici
 
-    def citaj_indekse_sql(self, file_name):
+    def citaj_vlasnike_sql(self, file_name):
         file_name = path() + file_name
         vlasnici = {}
+        
+        con = lite.connect(file_name)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()
+
+            for (vlasnik_id, vlasnik_ime) in con.execute("""
+            select
+            vlasnik_id, vlasnik_ime
+            from
+            vlasnici
+            """):
+                if not vlasnik_id in vlasnici:
+                    vlasnici[vlasnik_id] = Vlasnik(vlasnik_id, vlasnik_ime.encode('utf-8'))
+                else:
+                    raise Exception("Dupli unos za isti vlasnik_id.")
+
+        return vlasnici
+
+    def citaj_indekse_sql(self, vlasnici, file_name):
+        file_name = path() + file_name
         
         con = lite.connect(file_name)
         with con:
@@ -469,12 +503,10 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             from indeksi
             join vlasnici
             on indeksi.vlasnik_id = vlasnici.vlasnik_id
+            join (select rowid, vlasnik_id, vrsta_goriva, max(datetime) maxdatetime from indeksi group by vlasnik_id, vrsta_goriva) filter
+            on indeksi.rowid = filter.rowid
             """):
-                if vlasnik_id in vlasnici:
-                    vlasnik = vlasnici[vlasnik_id]
-                else:
-                    vlasnik = Vlasnik(vlasnik_id, vlasnik_ime.encode('utf-8'))
-                    vlasnici[vlasnik.id()] = vlasnik
+                vlasnik = vlasnici[vlasnik_id]
 
                 vlasnik.dodaj_indeks(
                     vrsta_goriva,
@@ -509,7 +541,12 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             con.row_factory = lite.Row
             cur = con.cursor()
 
-            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in con.execute("select vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime from cijene"):
+            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in con.execute("""
+            select cijene.vlasnik_id, cijene.vrsta_goriva, cijene.broj_postaja, cijene.cijena, cijene.datetime
+            from cijene
+            join (select rowid, vlasnik_id, vrsta_goriva, cijena, max(datetime) maxdatetime from cijene group by vlasnik_id, vrsta_goriva, cijena) filter
+            on cijene.rowid = filter.rowid
+            """):
                 vlasnik = vlasnici[vlasnik_id]
                 vlasnik.dodaj_cijenu(vrsta_goriva, cijena, broj_postaja)
             
@@ -534,7 +571,7 @@ def debug_usporedi_vlasnike(vlasnici, vlasnici2):
             exit()
     print "Nema razlika"
 
-def pisi_sve_u_sql(ime_baze):
+def init_sql(ime_baze):
     saver = Saver()
     saver.kreiraj_tablicu_vlasnika(ime_baze)
     saver.kreiraj_tablicu_indeksa(ime_baze)
@@ -542,6 +579,11 @@ def pisi_sve_u_sql(ime_baze):
     
     vlasnici = gen_vlasnici_full()
 
+    saver.pisi_vlasnike_sql(vlasnici, ime_baze)
+
+def pisi_sve_u_sql(ime_baze):
+    saver = Saver()
+    vlasnici = gen_vlasnici_full()
     saver.pisi_indekse_sql(vlasnici, ime_baze)
     saver.pisi_cijene_s_postajama_sql(vlasnici, ime_baze)
 
@@ -550,10 +592,12 @@ if __name__ == "__main__":
     limit = 4
     vrsta_goriva = 2
 
+    #init_sql('db.sqlite3')
     pisi_sve_u_sql('db.sqlite3')
 
     saver = Saver()
-    vlasnici = saver.citaj_indekse_sql('db.sqlite3')
+    vlasnici = saver.citaj_vlasnike_sql('db.sqlite3')
+    vlasnici = saver.citaj_indekse_sql(vlasnici, 'db.sqlite3')
     vlasnici = saver.citaj_cijene_s_postajama_sql(vlasnici, 'db.sqlite3')
 
     cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
@@ -564,7 +608,7 @@ if __name__ == "__main__":
 
     print "--------------"
 
-    sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+    sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.indeks(vrsta_goriva))
     for vlasnik in sortirani_vlasnici:
         if vlasnik.nudi_gorivo(vrsta_goriva):
             if vlasnik.broj_postaja(vrsta_goriva) >= limit:

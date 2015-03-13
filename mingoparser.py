@@ -433,12 +433,12 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         cbp = vlasnik.cijene_sa_brojem_postaja(vrsta_goriva)
                         for cijena in cbp:
                             broj_postaja = cbp[cijena]
-                        redovi_za_upis.append((
-                            vlasnik.id(),
-                            vrsta_goriva,
-                            broj_postaja,
-                            cijena
-                        ))
+                            redovi_za_upis.append((
+                                vlasnik.id(),
+                                vrsta_goriva,
+                                broj_postaja,
+                                cijena
+                            ))
 
             cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena) VALUES(?, ?, ?, ?)", redovi_za_upis)
             con.commit()

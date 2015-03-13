@@ -3,3 +3,5 @@
 *.db
 *.pyc
 db*.sqlite3
+.coverage
+cover

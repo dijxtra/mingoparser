@@ -1,44 +1,68 @@
+# -*- coding: utf-8 -*-
 import unittest
 from mingoparser import *
 
 
 class MingoparserTest(unittest.TestCase):
-    """Unit tests for records.py using mcintyre.ged."""
+    """Opći unit testovi."""
 
     def setUp(self):
-        self.limit = 4
-        self.vrsta_goriva = 2
         self.database_file = 'db.test.sqlite3'
 
     def test_main(self):
-        init_sql('db.sqlite3')
-        pisi_sve_u_sql('db.sqlite3')
-
-        saver = Saver()
-        vlasnici_sql = saver.citaj_vlasnike_sql('db.sqlite3')
-        vlasnici_sql = saver.citaj_indekse_sql(vlasnici_sql, 'db.sqlite3')
-        vlasnici_sql = saver.citaj_cijene_s_postajama_sql(vlasnici_sql, 'db.sqlite3')
+        init_sql(self.database_file)
+        pisi_sve_u_sql(self.database_file)
 
         vlasnici = gen_vlasnici_full()
 
         saver = Saver()
-        saver.pisi_indekse_json(vlasnici, 'vlasnici.json')
-        saver.pisi_cijene_s_postajama_json(vlasnici, 'cijene_s_postajama.json')
+        vlasnici_sql = saver.citaj_vlasnike_sql(self.database_file)
+        vlasnici_sql = saver.citaj_indekse_sql(vlasnici_sql, self.database_file)
+        vlasnici_sql = saver.citaj_cijene_s_postajama_sql(vlasnici_sql, self.database_file)
 
-        vlasnici_json = saver.citaj_indekse_json('vlasnici.json')
-        vlasnici_json = saver.citaj_cijene_s_postajama_json(vlasnici_json, 'cijene_s_postajama.json')
-
-        for vlasnik_json in vlasnici_json.values():
-            self.assertTrue(vlasnik_json.id() in vlasnici_sql)
+        for vlasnik in vlasnici.values():
+            self.assertTrue(vlasnik.id() in vlasnici_sql)
 
         for vlasnik_sql in vlasnici_sql.values():
-            self.assertTrue(vlasnik_sql.id() in vlasnici_json)
+            self.assertTrue(vlasnik_sql.id() in vlasnici)
 
         for vlasnik_sql in vlasnici_sql.values():
-            vlasnik_json = vlasnici_json[vlasnik_sql.id()]
-            self.assertEqual(vlasnik_sql.ime(), vlasnik_json.ime())
+            vlasnik = vlasnici[vlasnik_sql.id()]
+            
+            self.assertEqual(vlasnik_sql.ime(), vlasnik.ime())
+            self.assertEqual(vlasnik_sql.vrste_goriva().sort(), vlasnik.vrste_goriva().sort())
+#            self.assertEqual(vlasnik_sql.broj_postaja(), vlasnik.broj_postaja())
+            for vrsta_goriva in vlasnik.vrste_goriva():
+                self.assertEqual(vlasnik_sql.indeks(vrsta_goriva), vlasnik.indeks(vrsta_goriva))
+#                self.assertEqual(vlasnik_sql.broj_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva))
+#                self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
             
 
+        pisi_sve_u_sql(self.database_file)
+        pisi_sve_u_sql(self.database_file)
+
+        saver = Saver()
+        vlasnici_sql = saver.citaj_vlasnike_sql(self.database_file)
+        vlasnici_sql = saver.citaj_indekse_sql(vlasnici_sql, self.database_file)
+        vlasnici_sql = saver.citaj_cijene_s_postajama_sql(vlasnici_sql, self.database_file)
+
+        for vlasnik in vlasnici.values():
+            self.assertTrue(vlasnik.id() in vlasnici_sql)
+
+        for vlasnik_sql in vlasnici_sql.values():
+            self.assertTrue(vlasnik_sql.id() in vlasnici)
+
+        for vlasnik_sql in vlasnici_sql.values():
+            vlasnik = vlasnici[vlasnik_sql.id()]
+            
+            self.assertEqual(vlasnik_sql.ime(), vlasnik.ime())
+            self.assertEqual(vlasnik_sql.vrste_goriva().sort(), vlasnik.vrste_goriva().sort())
+#            self.assertEqual(vlasnik_sql.broj_postaja(), vlasnik.broj_postaja())
+            for vrsta_goriva in vlasnik.vrste_goriva():
+                self.assertEqual(vlasnik_sql.indeks(vrsta_goriva), vlasnik.indeks(vrsta_goriva))
+#                self.assertEqual(vlasnik_sql.broj_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva))
+#                self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
+            
         
 if __name__ == '__main__':
     unittest.main()

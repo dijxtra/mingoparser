@@ -315,7 +315,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
             con.commit()
 
-    def pisi_vlasnike_sql(self, vlasnici, file_name):
+    def pisi_vlasnike(self, vlasnici, file_name):
         file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
@@ -335,7 +335,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
             con.commit()
 
-    def pisi_indekse_sql(self, vlasnici, file_name):
+    def pisi_indekse(self, vlasnici, file_name):
         file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
@@ -359,7 +359,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
             con.commit()
         
-    def pisi_cijene_s_postajama_sql(self, vlasnici, file_name):
+    def pisi_cijene_s_postajama(self, vlasnici, file_name):
         file_name = path() + file_name
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
@@ -386,7 +386,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena) VALUES(?, ?, ?, ?)", redovi_za_upis)
             con.commit()
 
-    def citaj_vlasnike_sql(self, file_name):
+    def citaj_vlasnike(self, file_name):
         file_name = path() + file_name
         vlasnici = {}
         
@@ -409,7 +409,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         return vlasnici
 
-    def citaj_indekse_sql(self, vlasnici, file_name):
+    def citaj_indekse(self, vlasnici, file_name):
         file_name = path() + file_name
         
         con = lite.connect(file_name)
@@ -437,7 +437,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         return vlasnici
 
-    def citaj_cijene_s_postajama_sql(self, vlasnici, file_name):
+    def citaj_cijene_s_postajama(self, vlasnici, file_name):
         file_name = path() + file_name
 
         con = lite.connect(file_name)
@@ -457,7 +457,7 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             
         return vlasnici
 
-def init_sql(ime_baze):
+def init(ime_baze):
     saver = Saver()
     saver.kreiraj_tablicu_vlasnika(ime_baze)
     saver.kreiraj_tablicu_indeksa(ime_baze)
@@ -465,10 +465,10 @@ def init_sql(ime_baze):
     
     vlasnici = gen_vlasnici_full()
 
-    saver.pisi_vlasnike_sql(vlasnici, ime_baze)
+    saver.pisi_vlasnike(vlasnici, ime_baze)
 
 def pisi_sve_u_sql(ime_baze):
     saver = Saver()
     vlasnici = gen_vlasnici_full()
-    saver.pisi_indekse_sql(vlasnici, ime_baze)
-    saver.pisi_cijene_s_postajama_sql(vlasnici, ime_baze)
+    saver.pisi_indekse(vlasnici, ime_baze)
+    saver.pisi_cijene_s_postajama(vlasnici, ime_baze)

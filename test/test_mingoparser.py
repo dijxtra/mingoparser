@@ -9,16 +9,16 @@ class SQLTest(unittest.TestCase):
     def setUp(self):
         self.database_file = 'db.test.sqlite3'
 
-        init_sql(self.database_file)
+        init(self.database_file)
 
         pisi_sve_u_sql(self.database_file)
 
         self.vlasnici = gen_vlasnici_full()
 
         saver = Saver()
-        self.vlasnici_sql = saver.citaj_vlasnike_sql(self.database_file)
-        self.vlasnici_sql = saver.citaj_indekse_sql(self.vlasnici_sql, self.database_file)
-        self.vlasnici_sql = saver.citaj_cijene_s_postajama_sql(self.vlasnici_sql, self.database_file)
+        self.vlasnici_sql = saver.citaj_vlasnike(self.database_file)
+        self.vlasnici_sql = saver.citaj_indekse(self.vlasnici_sql, self.database_file)
+        self.vlasnici_sql = saver.citaj_cijene_s_postajama(self.vlasnici_sql, self.database_file)
 
     def test_cijene_sa_brojem_postaja(self):
         vlasnik_sql = self.vlasnici_sql[5]
@@ -58,9 +58,9 @@ class SQLTest(unittest.TestCase):
         pisi_sve_u_sql(self.database_file)
 
         saver = Saver()
-        self.vlasnici_sql = saver.citaj_vlasnike_sql(self.database_file)
-        self.vlasnici_sql = saver.citaj_indekse_sql(self.vlasnici_sql, self.database_file)
-        self.vlasnici_sql = saver.citaj_cijene_s_postajama_sql(self.vlasnici_sql, self.database_file)
+        self.vlasnici_sql = saver.citaj_vlasnike(self.database_file)
+        self.vlasnici_sql = saver.citaj_indekse(self.vlasnici_sql, self.database_file)
+        self.vlasnici_sql = saver.citaj_cijene_s_postajama(self.vlasnici_sql, self.database_file)
 
         self.test_main()
 

@@ -220,25 +220,6 @@ def vrste_goriva():
     vrste_goriva = gen_vrste_goriva(vrste_json)
     return vrste_goriva
 
-def gen_cijene_sa_vlasnicima(vlasnici):
-    cijene_sa_vlasnicima = {}
-    
-    for vlasnik in vlasnici.values():
-        for vrsta_goriva in vlasnik.vrste_goriva():
-            if vrsta_goriva not in cijene_sa_vlasnicima:
-                cijene_sa_vlasnicima[vrsta_goriva] = {}
-                
-            cijene_sa_brojem_postaja = vlasnik.cijene_sa_brojem_postaja(vrsta_goriva)
-            for cijena in cijene_sa_brojem_postaja:
-                broj_postaja = cijene_sa_brojem_postaja[cijena]
-                cv = cijene_sa_vlasnicima[vrsta_goriva]
-                
-                if not cijena in cv:
-                    cv[cijena] = {}
-                cv[cijena][vlasnik] = broj_postaja
-
-    return cijene_sa_vlasnicima
-
 def gen_vlasnici_full():
     obveznik_json = load_obveznik()
     vlasnici = gen_vlasnici(obveznik_json)
@@ -491,36 +472,3 @@ def pisi_sve_u_sql(ime_baze):
     vlasnici = gen_vlasnici_full()
     saver.pisi_indekse_sql(vlasnici, ime_baze)
     saver.pisi_cijene_s_postajama_sql(vlasnici, ime_baze)
-
-    
-if __name__ == "__main__":
-    limit = 4
-    vrsta_goriva = 2
-
-    #init_sql('db.sqlite3')
-    pisi_sve_u_sql('db.sqlite3')
-
-    saver = Saver()
-    vlasnici = saver.citaj_vlasnike_sql('db.sqlite3')
-    vlasnici = saver.citaj_indekse_sql(vlasnici, 'db.sqlite3')
-    vlasnici = saver.citaj_cijene_s_postajama_sql(vlasnici, 'db.sqlite3')
-
-    cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(vlasnici)
-
-    for (cijena, lista_vlasnika) in cijene_sa_vlasnicima[vrsta_goriva].iteritems():
-        if filter(lambda (vlasnik, broj_postaja): broj_postaja >= limit, lista_vlasnika.iteritems()):
-            print cijena, filter(lambda (ime, broj_postaja): broj_postaja >= limit, map(lambda (vlasnik, broj_postaja): (vlasnik.ime(), broj_postaja), lista_vlasnika.iteritems()))
-
-    print "--------------"
-
-    sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.indeks(vrsta_goriva))
-    for vlasnik in sortirani_vlasnici:
-        if vlasnik.nudi_gorivo(vrsta_goriva):
-            if vlasnik.broj_postaja(vrsta_goriva) >= limit:
-                print vlasnik.ime(), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva), format("%.2f" % vlasnik.indeks(vrsta_goriva))
-
-    print "--------------"
-
-    hrvatska = gen_hrvatska(vlasnici)
-
-    print hrvatska.ime(), format("%.3f" % hrvatska.indeks(vrsta_goriva))

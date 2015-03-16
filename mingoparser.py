@@ -476,6 +476,25 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             
         return vlasnici
 
+    def vrijeme_zadnjeg_upisa(self, baza, vrsta_goriva = None):
+        baza = path() + baza
+
+        con = lite.connect(baza)
+        with con:
+
+            con.row_factory = lite.Row
+            cur = con.cursor()
+
+            if vrsta_goriva:
+                cur.execute("select max(datetime) maxdatetime from indeksi where vrsta_goriva = ?", (str(vrsta_goriva)))
+                datetime = cur.fetchone()[0]
+            else:
+                cur.execute("select max(datetime) maxdatetime from indeksi")
+                datetime = cur.fetchone()[0]
+
+        return datetime
+
+
 def init(ime_baze):
     saver = Saver()
     saver.kreiraj_tablicu_vlasnika(ime_baze)

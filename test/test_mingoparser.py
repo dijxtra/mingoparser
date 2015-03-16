@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest
+import unittest, datetime
 from mingoparser import *
 
 
@@ -128,6 +128,15 @@ class SQLTest(unittest.TestCase):
                 self.assertEqual([cijena, vlasnik_brojpostaja_sortirano], ocekivani_rezultati[i])
                 i += 1
 
+    def test_vrijeme_zadnjeg_upisa(self):
+        database_file = 'db.test-date.sqlite3'
+
+        saver = Saver()
+
+        self.assertEqual(saver.vrijeme_zadnjeg_upisa(database_file), u'2015-03-17 11:53:24')
+        
+        self.assertEqual(saver.vrijeme_zadnjeg_upisa(database_file, vrsta_goriva = 2), u'2015-03-17 11:53:24')
+        self.assertEqual(saver.vrijeme_zadnjeg_upisa(database_file, vrsta_goriva = 3), u'2015-03-16 05:39:07')
         
 if __name__ == '__main__':
     unittest.main()

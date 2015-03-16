@@ -252,6 +252,25 @@ def gen_vlasnici_full():
 
     return vlasnici
 
+def gen_cijene_sa_vlasnicima(vlasnici):
+    cijene_sa_vlasnicima = {}
+    
+    for vlasnik in vlasnici.values():
+        for vrsta_goriva in vlasnik.vrste_goriva():
+            if vrsta_goriva not in cijene_sa_vlasnicima:
+                cijene_sa_vlasnicima[vrsta_goriva] = {}
+                
+            cijene_sa_brojem_postaja = vlasnik.cijene_sa_brojem_postaja(vrsta_goriva)
+            for cijena in cijene_sa_brojem_postaja:
+                broj_postaja = cijene_sa_brojem_postaja[cijena]
+                cv = cijene_sa_vlasnicima[vrsta_goriva]
+                
+                if not cijena in cv:
+                    cv[cijena] = {}
+                cv[cijena][vlasnik] = broj_postaja
+
+    return cijene_sa_vlasnicima
+
 def gen_hrvatska(vlasnici):
     hrvatska = Vlasnik(0, "Hrvatska")
 

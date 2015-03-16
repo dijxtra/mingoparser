@@ -100,6 +100,34 @@ class SQLTest(unittest.TestCase):
                     self.assertEqual([vlasnik.ime(), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva), round(vlasnik.indeks(vrsta_goriva), 2)], ocekivani_rezultati[i])
                     i += 1
 
+    def test_cijene(self):
+        vrsta_goriva = 2
+        limit = 4
+        
+        cijene_sa_vlasnicima = gen_cijene_sa_vlasnicima(self.vlasnici)
+
+        ocekivani_rezultati = [
+            [9.28, [('Crodux Derivati Dva d.o.o.', 53)]],
+            [9.32, [('Adria Oil d.o.o.', 10), ('Apios d.o.o.', 5), ('INA - Osijek Petrol d.d.', 10), ('INA \xe2\x80\x93 Industrija nafte d.d.', 265), ('KTC d.d.', 4), ('Tifon d.o.o.', 28)]],
+            [9.4, [('Energoinvest-Hrvatska d.o.o.', 9)]],
+            [9.27, [('INA \xe2\x80\x93 Industrija nafte d.d.', 21), ('Tifon d.o.o.', 4)]],
+            [9.31, [('LUKOIL Croatia d.o.o.', 48)]],
+            [9.6, [('Crno Zlato d o o', 4)]],
+            [9.22, [('Konzum d.d.', 4)]],
+            [9.3, [('Tifon d.o.o.', 4)]],
+            [9.38, [('Crodux Derivati Dva d.o.o.', 9)]],
+            [9.42, [('INA \xe2\x80\x93 Industrija nafte d.d.', 8)]]
+            ]
+
+        i = 0
+        for (cijena, lista_vlasnika) in cijene_sa_vlasnicima[vrsta_goriva].iteritems():
+            if filter(lambda (vlasnik, broj_postaja): broj_postaja >= limit, lista_vlasnika.iteritems()):
+                vlasnik_brojpostaja = map(lambda (vlasnik, broj_postaja): (vlasnik.ime(), broj_postaja), lista_vlasnika.iteritems())
+                vlasnik_brojpostaja_filtrirano = filter(lambda (ime, broj_postaja): broj_postaja >= limit, vlasnik_brojpostaja)
+                vlasnik_brojpostaja_sortirano = sorted(vlasnik_brojpostaja_filtrirano, key = lambda x: x[0])
+                self.assertEqual([cijena, vlasnik_brojpostaja_sortirano], ocekivani_rezultati[i])
+                i += 1
+
         
 if __name__ == '__main__':
     unittest.main()

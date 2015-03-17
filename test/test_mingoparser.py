@@ -7,17 +7,17 @@ class SQLTest(unittest.TestCase):
     """Testiranje upisa u bazu i čitanja iz baze."""
 
     def setUp(self):
-        self.saver = Saver('db.test.sqlite3')
+        self.baza = DatabaseConnection('db.test.sqlite3')
 
-        self.saver.init()
+        self.baza.kreiraj_tablice()
 
-        self.saver.pisi_sve_u_sql()
+        self.baza.popuni_tablice()
 
         self.vlasnici = gen_vlasnici_full()
 
-        self.vlasnici_sql = self.saver.citaj_vlasnike()
-        self.vlasnici_sql = self.saver.citaj_indekse(self.vlasnici_sql)
-        self.vlasnici_sql = self.saver.citaj_cijene_s_postajama(self.vlasnici_sql)
+        self.vlasnici_sql = self.baza.citaj_vlasnike()
+        self.vlasnici_sql = self.baza.citaj_indekse(self.vlasnici_sql)
+        self.vlasnici_sql = self.baza.citaj_cijene_s_postajama(self.vlasnici_sql)
 
     def test_cijene_sa_brojem_postaja(self):
         vlasnik_sql = self.vlasnici_sql[5]
@@ -52,13 +52,13 @@ class SQLTest(unittest.TestCase):
                 self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
 
     def test_visestruko_pisanje(self):
-        self.saver.pisi_sve_u_sql()
-        self.saver.pisi_sve_u_sql()
-        self.saver.pisi_sve_u_sql()
+        self.baza.popuni_tablice()
+        self.baza.popuni_tablice()
+        self.baza.popuni_tablice()
 
-        self.vlasnici_sql = self.saver.citaj_vlasnike()
-        self.vlasnici_sql = self.saver.citaj_indekse(self.vlasnici_sql)
-        self.vlasnici_sql = self.saver.citaj_cijene_s_postajama(self.vlasnici_sql)
+        self.vlasnici_sql = self.baza.citaj_vlasnike()
+        self.vlasnici_sql = self.baza.citaj_indekse(self.vlasnici_sql)
+        self.vlasnici_sql = self.baza.citaj_cijene_s_postajama(self.vlasnici_sql)
 
         self.test_main()
 
@@ -127,12 +127,12 @@ class SQLTest(unittest.TestCase):
                 i += 1
 
     def test_vrijeme_zadnjeg_upisa(self):
-        saver = Saver('db.test-date.sqlite3')
+        baza = DatabaseConnection('db.test-date.sqlite3')
 
-        self.assertEqual(saver.vrijeme_zadnjeg_upisa(), u'2015-03-17 11:53:24')
+        self.assertEqual(baza.vrijeme_zadnjeg_upisa(), u'2015-03-17 11:53:24')
         
-        self.assertEqual(saver.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-03-17 11:53:24')
-        self.assertEqual(saver.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-03-16 05:39:07')
+        self.assertEqual(baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-03-17 11:53:24')
+        self.assertEqual(baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-03-16 05:39:07')
         
 if __name__ == '__main__':
     unittest.main()

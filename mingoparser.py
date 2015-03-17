@@ -284,12 +284,12 @@ def gen_hrvatska(vlasnici):
 
     return hrvatska
 
-class Saver:
+class DatabaseConnection:
     def __init__(self, baza):
         self.baza = path() + baza
         self.con = lite.connect(self.baza)
 
-    def init(self):
+    def kreiraj_tablice(self):
         self.kreiraj_tablicu_vlasnika()
         self.kreiraj_tablicu_indeksa()
         self.kreiraj_tablicu_cijena()
@@ -298,7 +298,7 @@ class Saver:
 
         self.pisi_vlasnike(vlasnici)
 
-    def pisi_sve_u_sql(self):
+    def popuni_tablice(self):
         vlasnici = gen_vlasnici_full()
         self.pisi_indekse(vlasnici)
         self.pisi_cijene_s_postajama(vlasnici)

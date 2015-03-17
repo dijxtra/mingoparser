@@ -7,18 +7,17 @@ class SQLTest(unittest.TestCase):
     """Testiranje upisa u bazu i čitanja iz baze."""
 
     def setUp(self):
-        self.database_file = 'db.test.sqlite3'
+        self.saver = Saver('db.test.sqlite3')
 
-        init(self.database_file)
+        self.saver.init()
 
-        pisi_sve_u_sql(self.database_file)
+        self.saver.pisi_sve_u_sql()
 
         self.vlasnici = gen_vlasnici_full()
 
-        saver = Saver()
-        self.vlasnici_sql = saver.citaj_vlasnike(self.database_file)
-        self.vlasnici_sql = saver.citaj_indekse(self.vlasnici_sql, self.database_file)
-        self.vlasnici_sql = saver.citaj_cijene_s_postajama(self.vlasnici_sql, self.database_file)
+        self.vlasnici_sql = self.saver.citaj_vlasnike()
+        self.vlasnici_sql = self.saver.citaj_indekse(self.vlasnici_sql)
+        self.vlasnici_sql = self.saver.citaj_cijene_s_postajama(self.vlasnici_sql)
 
     def test_cijene_sa_brojem_postaja(self):
         vlasnik_sql = self.vlasnici_sql[5]
@@ -53,14 +52,13 @@ class SQLTest(unittest.TestCase):
                 self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
 
     def test_visestruko_pisanje(self):
-        pisi_sve_u_sql(self.database_file)
-        pisi_sve_u_sql(self.database_file)
-        pisi_sve_u_sql(self.database_file)
+        self.saver.pisi_sve_u_sql()
+        self.saver.pisi_sve_u_sql()
+        self.saver.pisi_sve_u_sql()
 
-        saver = Saver()
-        self.vlasnici_sql = saver.citaj_vlasnike(self.database_file)
-        self.vlasnici_sql = saver.citaj_indekse(self.vlasnici_sql, self.database_file)
-        self.vlasnici_sql = saver.citaj_cijene_s_postajama(self.vlasnici_sql, self.database_file)
+        self.vlasnici_sql = self.saver.citaj_vlasnike()
+        self.vlasnici_sql = self.saver.citaj_indekse(self.vlasnici_sql)
+        self.vlasnici_sql = self.saver.citaj_cijene_s_postajama(self.vlasnici_sql)
 
         self.test_main()
 
@@ -129,14 +127,12 @@ class SQLTest(unittest.TestCase):
                 i += 1
 
     def test_vrijeme_zadnjeg_upisa(self):
-        database_file = 'db.test-date.sqlite3'
+        saver = Saver('db.test-date.sqlite3')
 
-        saver = Saver()
-
-        self.assertEqual(saver.vrijeme_zadnjeg_upisa(database_file), u'2015-03-17 11:53:24')
+        self.assertEqual(saver.vrijeme_zadnjeg_upisa(), u'2015-03-17 11:53:24')
         
-        self.assertEqual(saver.vrijeme_zadnjeg_upisa(database_file, vrsta_goriva = 2), u'2015-03-17 11:53:24')
-        self.assertEqual(saver.vrijeme_zadnjeg_upisa(database_file, vrsta_goriva = 3), u'2015-03-16 05:39:07')
+        self.assertEqual(saver.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-03-17 11:53:24')
+        self.assertEqual(saver.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-03-16 05:39:07')
         
 if __name__ == '__main__':
     unittest.main()

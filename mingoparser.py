@@ -285,12 +285,27 @@ def gen_hrvatska(vlasnici):
     return hrvatska
 
 class Saver:
-    def kreiraj_tablicu_vlasnika(self, file_name):
-        file_name = path() + file_name
+    def __init__(self, baza):
+        self.baza = path() + baza
+        self.con = lite.connect(self.baza)
 
-        con = lite.connect(file_name)
-        with con:
-            cur = con.cursor()    
+    def init(self):
+        self.kreiraj_tablicu_vlasnika()
+        self.kreiraj_tablicu_indeksa()
+        self.kreiraj_tablicu_cijena()
+
+        vlasnici = gen_vlasnici_full()
+
+        self.pisi_vlasnike(vlasnici)
+
+    def pisi_sve_u_sql(self):
+        vlasnici = gen_vlasnici_full()
+        self.pisi_indekse(vlasnici)
+        self.pisi_cijene_s_postajama(vlasnici)
+
+    def kreiraj_tablicu_vlasnika(self):
+        with self.con:
+            cur = self.con.cursor()    
 
             cur.execute("DROP TABLE IF EXISTS vlasnici")
             cur.execute("""CREATE TABLE vlasnici(
@@ -298,14 +313,11 @@ vlasnik_id INT,
 vlasnik_ime TEXT,
 datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
-            con.commit()
+            self.con.commit()
         
-    def kreiraj_tablicu_indeksa(self, file_name):
-        file_name = path() + file_name
-
-        con = lite.connect(file_name)
-        with con:
-            cur = con.cursor()    
+    def kreiraj_tablicu_indeksa(self):
+        with self.con:
+            cur = self.con.cursor()    
 
             cur.execute("DROP TABLE IF EXISTS indeksi")
             cur.execute("""CREATE TABLE indeksi(
@@ -315,14 +327,11 @@ broj_postaja INT,
 indeks FLOAT,
 datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
-            con.commit()
+            self.con.commit()
         
-    def kreiraj_tablicu_cijena(self, file_name):
-        file_name = path() + file_name
-
-        con = lite.connect(file_name)
-        with con:
-            cur = con.cursor()    
+    def kreiraj_tablicu_cijena(self):
+        with self.con:
+            cur = self.con.cursor()    
 
             cur.execute("DROP TABLE IF EXISTS cijene")
             cur.execute("""CREATE TABLE cijene(
@@ -332,17 +341,15 @@ broj_postaja INT,
 cijena FLOAT,
 datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
-            con.commit()
+            self.con.commit()
 
-    def pisi_vlasnike(self, vlasnici, file_name):
-        file_name = path() + file_name
+    def pisi_vlasnike(self, vlasnici):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
-        con = lite.connect(file_name)
-        with con:
+        with self.con:
 
-            con.row_factory = lite.Row
-            cur = con.cursor()
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
 
             vlasnici_za_upis = []
             for vlasnik in sortirani_vlasnici:
@@ -352,17 +359,15 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         ))
 
             cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
-            con.commit()
+            self.con.commit()
 
-    def pisi_indekse(self, vlasnici, file_name):
-        file_name = path() + file_name
+    def pisi_indekse(self, vlasnici):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
-        con = lite.connect(file_name)
-        with con:
+        with self.con:
 
-            con.row_factory = lite.Row
-            cur = con.cursor()
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
 
             indeksi_za_upis = []
             for vlasnik in sortirani_vlasnici:
@@ -376,17 +381,15 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         ))
 
             cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
-            con.commit()
+            self.con.commit()
         
-    def pisi_cijene_s_postajama(self, vlasnici, file_name):
-        file_name = path() + file_name
+    def pisi_cijene_s_postajama(self, vlasnici):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
-        con = lite.connect(file_name)
-        with con:
+        with self.con:
 
-            con.row_factory = lite.Row
-            cur = con.cursor()    
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()    
 
             redovi_za_upis = []
             for vlasnik in sortirani_vlasnici:
@@ -403,19 +406,17 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             ))
 
             cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena) VALUES(?, ?, ?, ?)", redovi_za_upis)
-            con.commit()
+            self.con.commit()
 
-    def citaj_vlasnike(self, file_name):
-        file_name = path() + file_name
+    def citaj_vlasnike(self):
         vlasnici = {}
         
-        con = lite.connect(file_name)
-        with con:
+        with self.con:
 
-            con.row_factory = lite.Row
-            cur = con.cursor()
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
 
-            for (vlasnik_id, vlasnik_ime) in con.execute("""
+            for (vlasnik_id, vlasnik_ime) in self.con.execute("""
             select
             vlasnik_id, vlasnik_ime
             from
@@ -428,16 +429,13 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         return vlasnici
 
-    def citaj_indekse(self, vlasnici, file_name):
-        file_name = path() + file_name
-        
-        con = lite.connect(file_name)
-        with con:
+    def citaj_indekse(self, vlasnici):
+        with self.con:
 
-            con.row_factory = lite.Row
-            cur = con.cursor()
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
 
-            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, datetime) in con.execute("""
+            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, datetime) in self.con.execute("""
             select
             indeksi.vlasnik_id, vlasnici.vlasnik_ime, indeksi.vrsta_goriva, indeksi.broj_postaja, indeksi.indeks, indeksi.datetime
             from indeksi
@@ -456,16 +454,13 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         return vlasnici
 
-    def citaj_cijene_s_postajama(self, vlasnici, file_name):
-        file_name = path() + file_name
+    def citaj_cijene_s_postajama(self, vlasnici):
+        with self.con:
 
-        con = lite.connect(file_name)
-        with con:
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
 
-            con.row_factory = lite.Row
-            cur = con.cursor()
-
-            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in con.execute("""
+            for (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) in self.con.execute("""
             select cijene.vlasnik_id, cijene.vrsta_goriva, cijene.broj_postaja, cijene.cijena, cijene.datetime
             from cijene
             join (select rowid, vlasnik_id, vrsta_goriva, cijena, max(datetime) maxdatetime from cijene group by vlasnik_id, vrsta_goriva, cijena) filter
@@ -476,14 +471,11 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             
         return vlasnici
 
-    def vrijeme_zadnjeg_upisa(self, baza, vrsta_goriva = None):
-        baza = path() + baza
+    def vrijeme_zadnjeg_upisa(self, vrsta_goriva = None):
+        with self.con:
 
-        con = lite.connect(baza)
-        with con:
-
-            con.row_factory = lite.Row
-            cur = con.cursor()
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
 
             if vrsta_goriva:
                 cur.execute("select max(datetime) maxdatetime from indeksi where vrsta_goriva = ?", (str(vrsta_goriva)))
@@ -495,18 +487,3 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         return datetime
 
 
-def init(ime_baze):
-    saver = Saver()
-    saver.kreiraj_tablicu_vlasnika(ime_baze)
-    saver.kreiraj_tablicu_indeksa(ime_baze)
-    saver.kreiraj_tablicu_cijena(ime_baze)
-    
-    vlasnici = gen_vlasnici_full()
-
-    saver.pisi_vlasnike(vlasnici, ime_baze)
-
-def pisi_sve_u_sql(ime_baze):
-    saver = Saver()
-    vlasnici = gen_vlasnici_full()
-    saver.pisi_indekse(vlasnici, ime_baze)
-    saver.pisi_cijene_s_postajama(vlasnici, ime_baze)

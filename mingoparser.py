@@ -293,6 +293,7 @@ class DatabaseConnection:
         self.kreiraj_tablicu_vlasnika()
         self.kreiraj_tablicu_indeksa()
         self.kreiraj_tablicu_cijena()
+        self.kreiraj_vieweve()
 
         vlasnici = gen_vlasnici_full()
 
@@ -341,6 +342,51 @@ broj_postaja INT,
 cijena FLOAT,
 datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
+            self.con.commit()
+
+    def kreiraj_vieweve(self):
+        with self.con:
+            cur = self.con.cursor()    
+
+            cur.execute("DROP VIEW IF EXISTS najnoviji_indeksi")
+            cur.execute("""
+create view najnoviji_indeksi as
+select
+indeksi.rowid, indeksi.*
+from indeksi
+join (
+    select rowid, vlasnik_id, vrsta_goriva, max(datetime)
+    from indeksi
+    group by vlasnik_id, vrsta_goriva
+) filter
+  on indeksi.rowid = filter.rowid
+""")
+            
+            cur.execute("DROP VIEW IF EXISTS indeksi_osim_najnovijih")
+            cur.execute("""
+create view indeksi_osim_najnovijih as
+select indeksi.rowid, indeksi.*
+from indeksi
+left outer join najnoviji_indeksi
+  on indeksi.vlasnik_id = najnoviji_indeksi.vlasnik_id
+  and indeksi.vrsta_goriva = najnoviji_indeksi.vrsta_goriva
+  and indeksi.indeks = najnoviji_indeksi.indeks
+where najnoviji_indeksi.rowid is null
+""")
+
+            cur.execute("DROP VIEW IF EXISTS prednajnoviji_indeksi")
+            cur.execute("""
+create view prednajnoviji_indeksi as
+select
+indeksi_osim_najnovijih.*
+from indeksi_osim_najnovijih
+join (
+  select rowid, vlasnik_id, vrsta_goriva, max(datetime) maxdatetime
+  from indeksi_osim_najnovijih
+  group by vlasnik_id, vrsta_goriva
+) filter
+  on indeksi_osim_najnovijih.rowid = filter.rowid
+""")
             self.con.commit()
 
     def pisi_vlasnike(self, vlasnici):
@@ -435,14 +481,12 @@ datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             self.con.row_factory = lite.Row
             cur = self.con.cursor()
 
-            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, datetime) in self.con.execute("""
+            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks) in self.con.execute("""
             select
-            indeksi.vlasnik_id, vlasnici.vlasnik_ime, indeksi.vrsta_goriva, indeksi.broj_postaja, indeksi.indeks, indeksi.datetime
-            from indeksi
+            vlasnici.vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks
+            from najnoviji_indeksi
             join vlasnici
-            on indeksi.vlasnik_id = vlasnici.vlasnik_id
-            join (select rowid, vlasnik_id, vrsta_goriva, max(datetime) maxdatetime from indeksi group by vlasnik_id, vrsta_goriva) filter
-            on indeksi.rowid = filter.rowid
+            on najnoviji_indeksi.vlasnik_id = vlasnici.vlasnik_id
             """):
                 vlasnik = vlasnici[vlasnik_id]
 

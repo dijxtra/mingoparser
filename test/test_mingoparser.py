@@ -10,7 +10,7 @@ class SQLTest(unittest.TestCase):
         self.baza = DatabaseConnection('db.test.sqlite3')
         self.baza.kreiraj_tablice()
 
-        citac = CitacVrijednosti(online = False)
+        citac = CitacVrijednostiOffline()
         self.vlasnici = citac.gen_vlasnici_full()
 
         self.baza.popuni_osnovne_tablice(self.vlasnici)

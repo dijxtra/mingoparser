@@ -14,44 +14,21 @@ def path():
         return dirname + '/'
 
 class CitacVrijednosti:
-    def __init__(self, online):
-        self.ONLINE = online
-        
     def load_vrste(self):
-        if (self.ONLINE):
-            url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
-            return json.loads(urllib2.urlopen(url).read())
-        else:
-            file_name = path() + 'inputs/vrste-goriva'
-            with open(file_name) as f:
-                return json.loads(f.read())
+        url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
+        return json.loads(urllib2.urlopen(url).read())
 
     def load_obveznik(self):
-        if (self.ONLINE):
-            url = 'http://min-go.hr/api/web_api/web/obveznik'
-            return json.loads(urllib2.urlopen(url).read())
-        else:
-            file_name = path() + 'inputs/obveznik'
-            with open(file_name) as f:
-                return json.loads(f.read())
+        url = 'http://min-go.hr/api/web_api/web/obveznik'
+        return json.loads(urllib2.urlopen(url).read())
 
     def load_postaja(self):
-        if (self.ONLINE):
-            url = 'http://min-go.hr/api/web_api/web/postaja'
-            return json.loads(urllib2.urlopen(url).read())
-        else:
-            file_name = path() + 'inputs/postaja'
-            with open(file_name) as f:
-                return json.loads(f.read())
+        url = 'http://min-go.hr/api/web_api/web/postaja'
+        return json.loads(urllib2.urlopen(url).read())
 
     def load_cijene(self):
-        if (self.ONLINE):
-            url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
-            return urllib2.urlopen(url).read()
-        else:
-            file_name = path() + 'inputs/vazeca-cijena'
-            with open(file_name) as f:
-                return json.loads(f.read())
+        url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
+        return urllib2.urlopen(url).read()
 
     def vrste_goriva(self):
         vrste_json = load_vrste()
@@ -114,6 +91,27 @@ class CitacVrijednosti:
                 vlasnici[vlasnik.id()] = vlasnik
 
         return vlasnici
+
+class CitacVrijednostiOffline(CitacVrijednosti):
+    def load_vrste(self):
+        file_name = path() + 'inputs/vrste-goriva'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+    def load_obveznik(self):
+        file_name = path() + 'inputs/obveznik'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+    def load_postaja(self):
+        file_name = path() + 'inputs/postaja'
+        with open(file_name) as f:
+            return json.loads(f.read())
+
+    def load_cijene(self):
+        file_name = path() + 'inputs/vazeca-cijena'
+        with open(file_name) as f:
+            return json.loads(f.read())
 
 
 class Postaja:

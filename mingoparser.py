@@ -505,10 +505,15 @@ join (
             from
             vlasnici
             """):
+                vlasnik_ime = vlasnik_ime.encode('utf-8')
                 if not vlasnik_id in vlasnici:
-                    vlasnici[vlasnik_id] = Vlasnik(vlasnik_id, vlasnik_ime.encode('utf-8'))
+                    vlasnici[vlasnik_id] = Vlasnik(vlasnik_id, vlasnik_ime)
                 else:
-                    raise Exception("Dupli unos za isti vlasnik_id.")
+                    stari_vlasnik = vlasnici[vlasnik_id]
+                    if stari_vlasnik.ime() != vlasnik_ime:
+                        error = "Vlasnik " + stari_vlasnik.ime() + " promijenio ime u " + vlasnik_ime + "!"
+                        print error
+                        #raise Exception(error)
 
         return vlasnici
 

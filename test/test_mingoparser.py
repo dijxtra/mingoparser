@@ -8,13 +8,14 @@ class SQLTest(unittest.TestCase):
 
     def setUp(self):
         self.baza = DatabaseConnection('db.test.sqlite3')
-
         self.baza.kreiraj_tablice()
 
-        self.baza.popuni_tablice()
+        citac = CitacVrijednosti(online = False)
+        self.vlasnici = citac.gen_vlasnici_full()
 
-        self.vlasnici = gen_vlasnici_full()
-
+        self.baza.popuni_osnovne_tablice(self.vlasnici)
+        self.baza.popuni_tablice(self.vlasnici)
+        
         self.vlasnici_sql = self.baza.citaj_vlasnike()
         self.vlasnici_sql = self.baza.citaj_indekse(self.vlasnici_sql)
         self.vlasnici_sql = self.baza.citaj_cijene_s_postajama(self.vlasnici_sql)
@@ -52,9 +53,9 @@ class SQLTest(unittest.TestCase):
                 self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
 
     def test_visestruko_pisanje(self):
-        self.baza.popuni_tablice()
-        self.baza.popuni_tablice()
-        self.baza.popuni_tablice()
+        self.baza.popuni_tablice(self.vlasnici)
+        self.baza.popuni_tablice(self.vlasnici)
+        self.baza.popuni_tablice(self.vlasnici)
 
         self.vlasnici_sql = self.baza.citaj_vlasnike()
         self.vlasnici_sql = self.baza.citaj_indekse(self.vlasnici_sql)

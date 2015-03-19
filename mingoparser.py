@@ -5,8 +5,6 @@ import os, io
 import datetime
 import sqlite3 as lite
 
-ONLINE = False
-
 def path():
     dirname = os.path.dirname(__file__)
     
@@ -15,41 +13,107 @@ def path():
     else:
         return dirname + '/'
 
-def load_vrste():
-    if (ONLINE):
-        url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
-        return json.loads(urllib2.urlopen(url).read())
-    else:
-        file_name = path() + 'inputs/vrste-goriva'
-        with open(file_name) as f:
-            return json.loads(f.read())
+class CitacVrijednosti:
+    def __init__(self, online):
+        self.ONLINE = online
+        
+    def load_vrste(self):
+        if (self.ONLINE):
+            url = 'http://min-go.hr/api/web_api/web/vrste-goriva'
+            return json.loads(urllib2.urlopen(url).read())
+        else:
+            file_name = path() + 'inputs/vrste-goriva'
+            with open(file_name) as f:
+                return json.loads(f.read())
 
-def load_obveznik():
-    if (ONLINE):
-        url = 'http://min-go.hr/api/web_api/web/obveznik'
-        return json.loads(urllib2.urlopen(url).read())
-    else:
-        file_name = path() + 'inputs/obveznik'
-        with open(file_name) as f:
-            return json.loads(f.read())
+    def load_obveznik(self):
+        if (self.ONLINE):
+            url = 'http://min-go.hr/api/web_api/web/obveznik'
+            return json.loads(urllib2.urlopen(url).read())
+        else:
+            file_name = path() + 'inputs/obveznik'
+            with open(file_name) as f:
+                return json.loads(f.read())
 
-def load_postaja():
-    if (ONLINE):
-        url = 'http://min-go.hr/api/web_api/web/postaja'
-        return json.loads(urllib2.urlopen(url).read())
-    else:
-        file_name = path() + 'inputs/postaja'
-        with open(file_name) as f:
-            return json.loads(f.read())
+    def load_postaja(self):
+        if (self.ONLINE):
+            url = 'http://min-go.hr/api/web_api/web/postaja'
+            return json.loads(urllib2.urlopen(url).read())
+        else:
+            file_name = path() + 'inputs/postaja'
+            with open(file_name) as f:
+                return json.loads(f.read())
 
-def load_cijene():
-    if (ONLINE):
-        url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
-        return urllib2.urlopen(url).read()
-    else:
-        file_name = path() + 'inputs/vazeca-cijena'
-        with open(file_name) as f:
-            return json.loads(f.read())
+    def load_cijene(self):
+        if (self.ONLINE):
+            url = 'http://min-go.hr/api/web_api/web/vazeca-cijena'
+            return urllib2.urlopen(url).read()
+        else:
+            file_name = path() + 'inputs/vazeca-cijena'
+            with open(file_name) as f:
+                return json.loads(f.read())
+
+    def vrste_goriva(self):
+        vrste_json = load_vrste()
+        vrste_goriva = gen_vrste_goriva(vrste_json)
+        return vrste_goriva
+
+    def gen_vlasnici_postaja_dict(self, tree):
+        """Generira dictionary koji mapira postaju sa njenim vlasnikom"""
+        vlasnici_postaja = {}
+
+        for vlasnik in tree:
+            vlasnici_postaja[vlasnik["id_postaja"]] = vlasnik["obveznik"]
+
+        return vlasnici_postaja
+
+    def gen_vlasnici(self, tree):
+        vlasnici = {}
+
+        for obveznik in tree:
+            vlasnici[obveznik["id_obveznik"]] = Vlasnik(obveznik["id_obveznik"], obveznik["naziv"].encode('utf-8'))
+
+        return vlasnici
+
+    def gen_vrste_goriva(self, json):
+        vrste_goriva = []
+
+        for gorivo in json:
+            vrste_goriva.append([gorivo["id_vrstagoriva"], gorivo["vrsta_goriva"]])
+
+        return vrste_goriva
+
+    def gen_vlasnici_full(self):
+        obveznik_json = self.load_obveznik()
+        vlasnici = self.gen_vlasnici(obveznik_json)
+
+        postaja_json = self.load_postaja()
+        vlasnici_postaja = self.gen_vlasnici_postaja_dict(postaja_json)
+
+        cijene_json = self.load_cijene()
+        lista_postaja = []
+        for postaja in cijene_json:
+            p = Postaja(postaja)
+            vlasnik = vlasnici[vlasnici_postaja[int(p.id())]]
+
+            vlasnik.dodaj_postaju(p)
+            p.set_vlasnik(vlasnik)
+
+            lista_postaja.append(p)
+
+        for vlasnik in vlasnici.values():
+            vlasnik.gen_cijene_sa_brojem_postaja()
+            vlasnik.gen_indeksi()
+
+        vlasnici_mozda_prazni = vlasnici
+        vlasnici = {}
+
+        for kljuc in vlasnici_mozda_prazni:
+            vlasnik = vlasnici_mozda_prazni[kljuc]
+            if vlasnik.broj_postaja() > 0:
+                vlasnici[vlasnik.id()] = vlasnik
+
+        return vlasnici
 
 
 class Postaja:
@@ -190,68 +254,6 @@ class Vlasnik:
     def dodaj_indeks(self, vrsta_goriva, broj_postaja, indeks):
         self._indeksi[vrsta_goriva] = indeks
 
-def gen_vlasnici_postaja_dict(tree):
-    """Generira dictionary koji mapira postaju sa njenim vlasnikom"""
-    vlasnici_postaja = {}
-    
-    for vlasnik in tree:
-        vlasnici_postaja[vlasnik["id_postaja"]] = vlasnik["obveznik"]
-
-    return vlasnici_postaja
-
-def gen_vlasnici(tree):
-    vlasnici = {}
-
-    for obveznik in tree:
-        vlasnici[obveznik["id_obveznik"]] = Vlasnik(obveznik["id_obveznik"], obveznik["naziv"].encode('utf-8'))
-
-    return vlasnici
-
-def gen_vrste_goriva(json):
-    vrste_goriva = []
-
-    for gorivo in json:
-        vrste_goriva.append([gorivo["id_vrstagoriva"], gorivo["vrsta_goriva"]])
-
-    return vrste_goriva
-
-def vrste_goriva():
-    vrste_json = load_vrste()
-    vrste_goriva = gen_vrste_goriva(vrste_json)
-    return vrste_goriva
-
-def gen_vlasnici_full():
-    obveznik_json = load_obveznik()
-    vlasnici = gen_vlasnici(obveznik_json)
-
-    postaja_json = load_postaja()
-    vlasnici_postaja = gen_vlasnici_postaja_dict(postaja_json)
-
-    cijene_json = load_cijene()
-    lista_postaja = []
-    for postaja in cijene_json:
-        p = Postaja(postaja)
-        vlasnik = vlasnici[vlasnici_postaja[int(p.id())]]
-
-        vlasnik.dodaj_postaju(p)
-        p.set_vlasnik(vlasnik)
-        
-        lista_postaja.append(p)
-
-    for vlasnik in vlasnici.values():
-        vlasnik.gen_cijene_sa_brojem_postaja()
-        vlasnik.gen_indeksi()
-
-    vlasnici_mozda_prazni = vlasnici
-    vlasnici = {}
-    
-    for kljuc in vlasnici_mozda_prazni:
-        vlasnik = vlasnici_mozda_prazni[kljuc]
-        if vlasnik.broj_postaja() > 0:
-            vlasnici[vlasnik.id()] = vlasnik
-
-    return vlasnici
-
 def gen_cijene_sa_vlasnicima(vlasnici):
     cijene_sa_vlasnicima = {}
     
@@ -295,12 +297,10 @@ class DatabaseConnection:
         self.kreiraj_tablicu_cijena()
         self.kreiraj_vieweve()
 
-        vlasnici = gen_vlasnici_full()
-
+    def popuni_osnovne_tablice(self, vlasnici):
         self.pisi_vlasnike(vlasnici)
 
-    def popuni_tablice(self):
-        vlasnici = gen_vlasnici_full()
+    def popuni_tablice(self, vlasnici):
         self.pisi_indekse(vlasnici)
         self.pisi_cijene_s_postajama(vlasnici)
 
@@ -529,5 +529,3 @@ join (
                 datetime = cur.fetchone()[0]
 
         return datetime
-
-

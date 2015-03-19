@@ -172,6 +172,7 @@ class Vlasnik:
         self._ime = ime
         self._lista_postaja = []
         self._indeksi = {}
+        self._zadnja_promjena = {}
         self._cijene_sa_brojem_postaja = {}
         
     def id(self):
@@ -252,8 +253,12 @@ class Vlasnik:
         else:
             return None
 
-    def dodaj_indeks(self, vrsta_goriva, broj_postaja, indeks):
+    def dodaj_indeks(self, vrsta_goriva, broj_postaja, indeks, datetime):
         self._indeksi[vrsta_goriva] = indeks
+        self._zadnja_promjena[vrsta_goriva] = datetime
+
+    def vrijeme_zadnjeg_upisa(self, vrsta_goriva):
+        return self._zadnja_promjena[vrsta_goriva]
 
 def gen_cijene_sa_vlasnicima(vlasnici):
     cijene_sa_vlasnicima = {}
@@ -523,9 +528,9 @@ join (
             self.con.row_factory = lite.Row
             cur = self.con.cursor()
 
-            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks) in self.con.execute("""
+            for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, datetime) in self.con.execute("""
             select
-            vlasnici.vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks
+            vlasnici.vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, najnoviji_indeksi.datetime
             from najnoviji_indeksi
             join vlasnici
             on najnoviji_indeksi.vlasnik_id = vlasnici.vlasnik_id
@@ -536,6 +541,7 @@ join (
                     vrsta_goriva,
                     broj_postaja,
                     indeks,
+                    datetime,
                 )
 
         return vlasnici

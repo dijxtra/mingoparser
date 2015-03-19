@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import unittest, datetime
+import unittest
 from mingoparser import *
 
 
@@ -40,33 +40,66 @@ class DvaSetaPodataka(unittest.TestCase):
         sortirani_vlasnici = sorted(self.vlasnici.values(), key=lambda v: v.indeks(vrsta_goriva))
 
         ocekivani_rezultati = [
-            ['Konzum d.d.', {9.59: 4, 9.22: 4}, 8, 9.22],
-            ['HIDRO VING D.O.O.', {9.27: 2, 9.67: 2}, 4, 9.27],
-            ['Antunovi\xc4\x87 TA d.o.o.', {9.27: 1, 9.67: 1, 9.29: 1, 9.62: 1}, 4, 9.28],
-            ['Mikol d.o.o.', {9.32: 1, 9.27: 2, 9.67: 1, 9.62: 2}, 6, 9.29],
-            ['Crodux Derivati Dva d.o.o.', {9.77: 9, 9.28: 53, 9.62: 1, 9.38: 9, 9.67: 54, 9.23: 2}, 128, 9.29],
-            ['Interpetrol d.o.o.', {9.32: 2, 9.27: 2, 9.65: 1, 9.67: 2, 9.62: 1}, 8, 9.29],
-            ['Cro-Can Center d.o.o.', {9.66: 3, 9.3: 3}, 6, 9.3],
-            ['KTC d.d.', {9.32: 4, 9.27: 1, 9.67: 5, 9.62: 2}, 12, 9.31],
-            ['LUKOIL Croatia d.o.o.', {9.81: 3, 9.66: 45, 9.31: 48}, 96, 9.31],
-            ['B.P. Jozinovi\xc4\x87', {9.66: 2, 9.31: 2}, 4, 9.31],
-            ['Tifon d.o.o.', {9.27: 4, 9.3: 4, 9.32: 28, 9.61: 1, 9.62: 6, 9.67: 29}, 72, 9.31],
-            ['Adria Oil d.o.o.', {9.32: 10, 9.27: 1, 9.66: 6, 9.67: 4, 9.62: 1}, 22, 9.32],
-            ['INA \xe2\x80\x93 Industrija nafte d.d.', {9.27: 21, 9.64: 2, 9.32: 265, 9.59: 1, 9.77: 8, 9.62: 20, 9.57: 1, 9.66: 5, 9.42: 8, 8.23: 1, 9.67: 258}, 590, 9.32],
-            ['Apios d.o.o.', {9.32: 5, 9.66: 5}, 10, 9.32],
-            ['INA - Osijek Petrol d.d.', {9.32: 10, 9.67: 10}, 20, 9.32],
-            ['Tri Bartola d.o.o.', {9.32: 2, 9.67: 2}, 4, 9.32],
-            ['Tuhelj Gorivo d.o.o.', {9.32: 2, 9.67: 2}, 4, 9.32],
-            ['Etradex d.o.o.', {9.32: 2, 9.67: 2}, 4, 9.32],
-            ['Dirus Projekt d.o.o.', {9.5: 2, 9.75: 8, 9.4: 9, 9.85: 2}, 21, 9.42],
-            ['Crno Zlato d o o', {9.6: 4, 9.98: 4}, 8, 9.6]
+            ['Konzum d.d.', {9.59: 4, 9.22: 4}, 8, 9.22, u'2015-03-17 17:53:41'],
+            ['HIDRO VING D.O.O.', {9.27: 2, 9.67: 2}, 4, 9.27, u'2015-03-17 17:53:41'],
+            ['Antunovi\xc4\x87 TA d.o.o.', {9.27: 1, 9.67: 1, 9.29: 1, 9.62: 1}, 4, 9.28, u'2015-03-17 17:53:41'],
+            ['Mikol d.o.o.', {9.32: 1, 9.27: 2, 9.67: 1, 9.62: 2}, 6, 9.29, u'2015-03-17 17:53:41'],
+            ['Crodux Derivati Dva d.o.o.', {9.77: 9, 9.28: 53, 9.62: 1, 9.38: 9, 9.67: 54, 9.23: 2}, 128, 9.29, u'2015-03-17 17:53:41'],
+            ['Interpetrol d.o.o.', {9.32: 2, 9.27: 2, 9.65: 1, 9.67: 2, 9.62: 1}, 8, 9.29, u'2015-03-17 17:53:41'],
+            ['Cro-Can Center d.o.o.', {9.66: 3, 9.3: 3}, 6, 9.3, u'2015-03-17 17:53:41'],
+            ['KTC d.d.', {9.32: 4, 9.27: 1, 9.67: 5, 9.62: 2}, 12, 9.31, u'2015-03-17 17:53:41'],
+            ['LUKOIL Croatia d.o.o.', {9.81: 3, 9.66: 45, 9.31: 48}, 96, 9.31, u'2015-03-17 17:53:41'],
+            ['B.P. Jozinovi\xc4\x87', {9.66: 2, 9.31: 2}, 4, 9.31, u'2015-03-17 17:53:41'],
+            ['Tifon d.o.o.', {9.27: 4, 9.3: 4, 9.32: 28, 9.61: 1, 9.62: 6, 9.67: 29}, 72, 9.31, u'2015-03-17 17:53:41'],
+            ['Adria Oil d.o.o.', {9.32: 10, 9.27: 1, 9.66: 6, 9.67: 4, 9.62: 1}, 22, 9.32, u'2015-03-17 17:53:41'],
+            ['INA \xe2\x80\x93 Industrija nafte d.d.', {9.27: 21, 9.64: 2, 9.32: 265, 9.59: 1, 9.77: 8, 9.62: 20, 9.57: 1, 9.66: 5, 9.42: 8, 8.23: 1, 9.67: 258}, 590, 9.32, u'2015-03-17 17:53:41'],
+            ['Apios d.o.o.', {9.32: 5, 9.66: 5}, 10, 9.32, u'2015-03-17 17:53:41'],
+            ['INA - Osijek Petrol d.d.', {9.32: 10, 9.67: 10}, 20, 9.32, u'2015-03-17 17:53:41'],
+            ['Tri Bartola d.o.o.', {9.32: 2, 9.67: 2}, 4, 9.32, u'2015-03-17 17:53:41'],
+            ['Tuhelj Gorivo d.o.o.', {9.32: 2, 9.67: 2}, 4, 9.32, u'2015-03-17 17:53:41'],
+            ['Etradex d.o.o.', {9.32: 2, 9.67: 2}, 4, 9.32, u'2015-03-17 17:53:41'],
+            ['Dirus Projekt d.o.o.', {9.5: 2, 9.75: 8, 9.4: 9, 9.85: 2}, 21, 9.42, u'2015-03-17 17:53:41'],
+            ['Crno Zlato d o o', {9.6: 4, 9.98: 4}, 8, 9.6, u'2015-03-17 17:53:41']
             ]
 
         i = 0
         for vlasnik in sortirani_vlasnici:
             if vlasnik.nudi_gorivo(vrsta_goriva):
                 if vlasnik.broj_postaja(vrsta_goriva) >= limit:
-                    self.assertEqual([vlasnik.ime(), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva), round(vlasnik.indeks(vrsta_goriva), 2)], ocekivani_rezultati[i])
+                    self.assertEqual([
+                        vlasnik.ime(),
+                        vlasnik.cijene_sa_brojem_postaja(vrsta_goriva),
+                        vlasnik.broj_postaja(vrsta_goriva),
+                        round(vlasnik.indeks(vrsta_goriva), 2),
+                        vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva)
+                    ],ocekivani_rezultati[i])
+                    i += 1
+
+    def test_nepromijenjeni_indeksi(self):
+        vrsta_goriva = 2
+        
+        sortirani_vlasnici = sorted(self.vlasnici.values(), key=lambda v: v.indeks(vrsta_goriva))
+
+        ocekivani_rezultati = [
+            ["Benzinska postaja Draž, PZ Topolje"],
+            ["MARP-PROMET d.o.o."],
+            ["Čukelj d.o.o."],
+            ["Hodak d.o.o."],
+            ["Šola d.o.o."],
+            ["SIROVINA BENZ TRANSPORT d.o.o."],
+            ["Metalmineral d.d."],
+            ["TURBO BENZ"],
+            ["ATTENDO CENTAR d.o.o."],
+            ["Tromilja benzin d.o.o."],
+            ["Repromaterijal d.o.o."],
+            ["KRIVAČA PETROL d.o.o."],
+        ]
+
+        i = 0
+        for vlasnik in sortirani_vlasnici:
+            if vlasnik.nudi_gorivo(vrsta_goriva):
+                if (vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva) == '2015-03-10 10:03:13'):
+                    self.assertEqual([vlasnik.ime()], ocekivani_rezultati[i])
                     i += 1
 
     def test_cijene(self):
@@ -110,5 +143,17 @@ class DvaSetaPodataka(unittest.TestCase):
         self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-03-17 17:53:41')
         self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-03-17 17:53:41')
         
+    def test_jedan_indeks(self):
+        vrsta_goriva = 2
+        limit = 4
+        
+        vlasnik = self.vlasnici[88]
+
+        self.assertEqual(vlasnik.ime(), 'Konzum d.d.')
+        self.assertEqual(vlasnik.cijene_sa_brojem_postaja(vrsta_goriva), {9.59: 4, 9.22: 4})
+        self.assertEqual(vlasnik.broj_postaja(vrsta_goriva), 8)
+        self.assertEqual(round(vlasnik.indeks(vrsta_goriva), 2), 9.22)
+        self.assertEqual(vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva), u'2015-03-17 17:53:41')
+
 if __name__ == '__main__':
     unittest.main()

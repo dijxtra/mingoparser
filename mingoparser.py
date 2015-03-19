@@ -93,7 +93,7 @@ class CitacVrijednosti:
         return vlasnici
 
 class CitacVrijednostiOffline(CitacVrijednosti):
-    def __init__(self, dir = 'inputs/'):
+    def __init__(self, dir):
         self.dir = path() + dir
         
     def load_vrste(self):

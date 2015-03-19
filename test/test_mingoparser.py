@@ -10,39 +10,38 @@ class SQLTest(unittest.TestCase):
         self.baza = DatabaseConnection('db.test.sqlite3')
         self.baza.kreiraj_tablice()
 
-        citac = CitacVrijednostiOffline()
-        self.vlasnici = citac.gen_vlasnici_full()
-
-        self.baza.popuni_osnovne_tablice(self.vlasnici)
-        self.baza.popuni_tablice(self.vlasnici)
+        citac = CitacVrijednostiOffline('inputs/')
+        self.vlasnici_citani = citac.gen_vlasnici_full()
+        self.baza.popuni_osnovne_tablice(self.vlasnici_citani, '2015-02-23 11:23:45')
+        self.baza.popuni_tablice(self.vlasnici_citani, '2015-02-23 11:23:45')
         
-        self.vlasnici_sql = self.baza.citaj_vlasnike()
-        self.vlasnici_sql = self.baza.citaj_indekse(self.vlasnici_sql)
-        self.vlasnici_sql = self.baza.citaj_cijene_s_postajama(self.vlasnici_sql)
+        self.vlasnici = self.baza.citaj_vlasnike()
+        self.vlasnici = self.baza.citaj_indekse(self.vlasnici)
+        self.vlasnici = self.baza.citaj_cijene_s_postajama(self.vlasnici)
 
     def test_cijene_sa_brojem_postaja(self):
-        vlasnik_sql = self.vlasnici_sql[5]
-        vlasnik = self.vlasnici[vlasnik_sql.id()]
+        vlasnik_sql = self.vlasnici[5]
+        vlasnik = self.vlasnici_citani[vlasnik_sql.id()]
 
         vrsta_goriva = 1
         self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
 
     def test_broj_postaja(self):
-        vlasnik_sql = self.vlasnici_sql[5]
-        vlasnik = self.vlasnici[vlasnik_sql.id()]
+        vlasnik_sql = self.vlasnici[5]
+        vlasnik = self.vlasnici_citani[vlasnik_sql.id()]
 
         vrsta_goriva = 1
         self.assertEqual(vlasnik_sql.broj_postaja(vrsta_goriva), vlasnik.broj_postaja(vrsta_goriva))
 
-    def test_main(self):
-        for vlasnik in self.vlasnici.values():
-            self.assertTrue(vlasnik.id() in self.vlasnici_sql)
+    def test_prolaz_kroz_bazu(self):
+        for vlasnik in self.vlasnici_citani.values():
+            self.assertTrue(vlasnik.id() in self.vlasnici)
 
-        for vlasnik_sql in self.vlasnici_sql.values():
-            self.assertTrue(vlasnik_sql.id() in self.vlasnici)
+        for vlasnik_sql in self.vlasnici.values():
+            self.assertTrue(vlasnik_sql.id() in self.vlasnici_citani)
 
-        for vlasnik_sql in self.vlasnici_sql.values():
-            vlasnik = self.vlasnici[vlasnik_sql.id()]
+        for vlasnik_sql in self.vlasnici.values():
+            vlasnik = self.vlasnici_citani[vlasnik_sql.id()]
             
             self.assertEqual(vlasnik_sql.ime(), vlasnik.ime())
             self.assertEqual(vlasnik_sql.vrste_goriva().sort(), vlasnik.vrste_goriva().sort())
@@ -53,15 +52,15 @@ class SQLTest(unittest.TestCase):
                 self.assertEqual(vlasnik_sql.cijene_sa_brojem_postaja(vrsta_goriva), vlasnik.cijene_sa_brojem_postaja(vrsta_goriva))
 
     def test_visestruko_pisanje(self):
-        self.baza.popuni_tablice(self.vlasnici)
-        self.baza.popuni_tablice(self.vlasnici)
-        self.baza.popuni_tablice(self.vlasnici)
+        self.baza.popuni_tablice(self.vlasnici_citani)
+        self.baza.popuni_tablice(self.vlasnici_citani)
+        self.baza.popuni_tablice(self.vlasnici_citani)
 
-        self.vlasnici_sql = self.baza.citaj_vlasnike()
-        self.vlasnici_sql = self.baza.citaj_indekse(self.vlasnici_sql)
-        self.vlasnici_sql = self.baza.citaj_cijene_s_postajama(self.vlasnici_sql)
+        self.vlasnici = self.baza.citaj_vlasnike()
+        self.vlasnici = self.baza.citaj_indekse(self.vlasnici)
+        self.vlasnici = self.baza.citaj_cijene_s_postajama(self.vlasnici)
 
-        self.test_main()
+        self.test_prolaz_kroz_bazu()
 
     def test_indeks_hrvatska(self):
         hrvatska = gen_hrvatska(self.vlasnici)
@@ -128,6 +127,12 @@ class SQLTest(unittest.TestCase):
                 i += 1
 
     def test_vrijeme_zadnjeg_upisa(self):
+        self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(), u'2015-02-23 11:23:45')
+        
+        self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-02-23 11:23:45')
+        self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-02-23 11:23:45')
+        
+    def test_vrijeme_zadnjeg_upisa_izoliran(self):
         baza = DatabaseConnection('db.test-date.sqlite3')
 
         self.assertEqual(baza.vrijeme_zadnjeg_upisa(), u'2015-03-17 11:53:24')

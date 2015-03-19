@@ -93,23 +93,26 @@ class CitacVrijednosti:
         return vlasnici
 
 class CitacVrijednostiOffline(CitacVrijednosti):
+    def __init__(self, dir = 'inputs/'):
+        self.dir = path() + dir
+        
     def load_vrste(self):
-        file_name = path() + 'inputs/vrste-goriva'
+        file_name = self.dir  + 'vrste-goriva'
         with open(file_name) as f:
             return json.loads(f.read())
 
     def load_obveznik(self):
-        file_name = path() + 'inputs/obveznik'
+        file_name = self.dir + 'obveznik'
         with open(file_name) as f:
             return json.loads(f.read())
 
     def load_postaja(self):
-        file_name = path() + 'inputs/postaja'
+        file_name = self.dir + 'postaja'
         with open(file_name) as f:
             return json.loads(f.read())
 
     def load_cijene(self):
-        file_name = path() + 'inputs/vazeca-cijena'
+        file_name = self.dir + 'vazeca-cijena'
         with open(file_name) as f:
             return json.loads(f.read())
 
@@ -295,12 +298,12 @@ class DatabaseConnection:
         self.kreiraj_tablicu_cijena()
         self.kreiraj_vieweve()
 
-    def popuni_osnovne_tablice(self, vlasnici):
-        self.pisi_vlasnike(vlasnici)
+    def popuni_osnovne_tablice(self, vlasnici, datum = None):
+        self.pisi_vlasnike(vlasnici, datum)
 
-    def popuni_tablice(self, vlasnici):
-        self.pisi_indekse(vlasnici)
-        self.pisi_cijene_s_postajama(vlasnici)
+    def popuni_tablice(self, vlasnici, datum = None):
+        self.pisi_indekse(vlasnici, datum)
+        self.pisi_cijene_s_postajama(vlasnici, datum)
 
     def kreiraj_tablicu_vlasnika(self):
         with self.con:
@@ -387,7 +390,7 @@ join (
 """)
             self.con.commit()
 
-    def pisi_vlasnike(self, vlasnici):
+    def pisi_vlasnike(self, vlasnici, datum = None):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         with self.con:
@@ -397,15 +400,25 @@ join (
 
             vlasnici_za_upis = []
             for vlasnik in sortirani_vlasnici:
-                vlasnici_za_upis.append((
-                            vlasnik.id(),
-                            vlasnik.ime().decode('utf-8'),
-                        ))
+                if datum:
+                    vlasnici_za_upis.append((
+                        vlasnik.id(),
+                        vlasnik.ime().decode('utf-8'),
+                        datum
+                    ))
+                else:
+                    vlasnici_za_upis.append((
+                        vlasnik.id(),
+                        vlasnik.ime().decode('utf-8'),
+                    ))
 
-            cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
+            if datum:
+                cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime, datetime) VALUES(?, ?, ?)", vlasnici_za_upis)
+            else:
+                cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
             self.con.commit()
 
-    def pisi_indekse(self, vlasnici):
+    def pisi_indekse(self, vlasnici, datum = None):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         with self.con:
@@ -417,17 +430,30 @@ join (
             for vlasnik in sortirani_vlasnici:
                 for vrsta_goriva in vlasnik.vrste_goriva():
                     if vlasnik.nudi_gorivo(vrsta_goriva):
-                        indeksi_za_upis.append((
-                            vlasnik.id(),
-                            vrsta_goriva,
-                            vlasnik.broj_postaja(vrsta_goriva),
-                            vlasnik.indeks(vrsta_goriva),
-                        ))
+                        if datum:
+                            indeksi_za_upis.append((
+                                vlasnik.id(),
+                                vrsta_goriva,
+                                vlasnik.broj_postaja(vrsta_goriva),
+                                vlasnik.indeks(vrsta_goriva),
+                                datum
+                            ))
+                        else:
+                            indeksi_za_upis.append((
+                                vlasnik.id(),
+                                vrsta_goriva,
+                                vlasnik.broj_postaja(vrsta_goriva),
+                                vlasnik.indeks(vrsta_goriva),
+                            ))
 
-            cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
+            if datum:
+                cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks, datetime) VALUES(?, ?, ?, ?, ?)", indeksi_za_upis)
+            else:
+                cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
+
             self.con.commit()
         
-    def pisi_cijene_s_postajama(self, vlasnici):
+    def pisi_cijene_s_postajama(self, vlasnici, datum = None):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
 
         with self.con:
@@ -442,14 +468,27 @@ join (
                         cbp = vlasnik.cijene_sa_brojem_postaja(vrsta_goriva)
                         for cijena in cbp:
                             broj_postaja = cbp[cijena]
-                            redovi_za_upis.append((
-                                vlasnik.id(),
-                                vrsta_goriva,
-                                broj_postaja,
-                                cijena
-                            ))
+                            if datum:
+                                redovi_za_upis.append((
+                                    vlasnik.id(),
+                                    vrsta_goriva,
+                                    broj_postaja,
+                                    cijena,
+                                    datum
+                                ))
+                            else:
+                                redovi_za_upis.append((
+                                    vlasnik.id(),
+                                    vrsta_goriva,
+                                    broj_postaja,
+                                    cijena
+                                ))
 
-            cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena) VALUES(?, ?, ?, ?)", redovi_za_upis)
+            if datum:
+                cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena, datetime) VALUES(?, ?, ?, ?, ?)", redovi_za_upis)
+            else:
+                cur.executemany("INSERT INTO cijene (vlasnik_id, vrsta_goriva, broj_postaja, cijena) VALUES(?, ?, ?, ?)", redovi_za_upis)
+
             self.con.commit()
 
     def citaj_vlasnike(self):

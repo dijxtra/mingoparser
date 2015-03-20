@@ -247,7 +247,6 @@ class Vlasnik:
 
             self._indeksi[vrsta_goriva] = i / br
                     
-            
     def indeks(self, vrsta_goriva):
         if vrsta_goriva in self._indeksi:
             return self._indeksi[vrsta_goriva]
@@ -259,7 +258,9 @@ class Vlasnik:
         self._zadnja_promjena[vrsta_goriva] = datetime
 
     def vrijeme_zadnjeg_upisa(self, vrsta_goriva):
-        return self._zadnja_promjena[vrsta_goriva]
+        if not vrsta_goriva in self._indeksi_historijat:
+            return None
+        return self._indeksi_historijat[vrsta_goriva][0][2]
 
     def promjene_vrijednosti(self, vrsta_goriva):
         if not vrsta_goriva in self._indeksi_historijat:
@@ -605,7 +606,7 @@ join (
             select
             vlasnik_id, vrsta_goriva, indeks, start_datetime, end_datetime
             from indeksi
-            order by vlasnik_id, vrsta_goriva, start_datetime
+            order by vlasnik_id, vrsta_goriva, start_datetime desc
             """):
                 if not vlasnik:
                     vlasnik = vlasnici[vlasnik_id]
@@ -618,8 +619,12 @@ join (
 
                 if not vrsta_goriva in historijat:
                     historijat[vrsta_goriva] = []
+
                 historijat[vrsta_goriva].append((indeks, start_datetime, end_datetime))
 
+            if historijat:
+                vlasnik.dodaj_historijat(historijat)
+                
         return vlasnici
 
     def citaj_cijene_s_postajama(self, vlasnici):

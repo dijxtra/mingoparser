@@ -48,16 +48,30 @@ class CetiriSetaPodataka(unittest.TestCase):
         ina = self.vlasnici[6]
 
         ocekivane_vrijednosti = [
-            [9.6683, u'2015-03-10 10:03:13', u'2015-03-10 10:03:13'],
-            [9.3155, u'2015-03-12 7:03:43', u'2015-03-12 7:03:43'],
             [9.6683, u'2015-03-14 08:26:34', u'2015-03-17 17:53:41'],
+            [9.3155, u'2015-03-12 7:03:43', u'2015-03-12 7:03:43'],
+            [9.6683, u'2015-03-10 10:03:13', u'2015-03-10 10:03:13'],
         ]
 
         i = 0
         for (indeks, start, end) in ina.promjene_vrijednosti(vrsta_goriva):
             self.assertEqual([round(indeks, 4), start, end], ocekivane_vrijednosti[i])
             i += 1
-        self.assertEqual(i, 3)      
-        
+        self.assertEqual(i, 3)
+
+    def test_promijene_vrijednosti_jedna(self):
+        vrsta_goriva = 8
+        ina = self.vlasnici[153]
+
+        ocekivane_vrijednosti = [8.99, u'2015-03-10 10:03:13', u'2015-03-17 17:53:41']
+
+        dobivena_vrijednost = ina.promjene_vrijednosti(vrsta_goriva)
+        self.assertTrue(dobivena_vrijednost)
+        print dobivena_vrijednost
+        self.assertEqual(len(dobivena_vrijednost), 1)
+        self.assertEqual(len(dobivena_vrijednost[0]), 3)
+        (indeks, start, end) = dobivena_vrijednost[0]
+        self.assertEqual([round(indeks, 4), start, end], ocekivane_vrijednosti)
+
 if __name__ == '__main__':
     unittest.main()

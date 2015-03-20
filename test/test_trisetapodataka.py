@@ -3,7 +3,7 @@ import unittest
 from mingoparser import *
 
 
-class DvaSetaPodataka(unittest.TestCase):
+class CetiriSetaPodataka(unittest.TestCase):
     """Testiranje aplikacije sa dva različita seta podataka odjednom."""
 
     def setUp(self):
@@ -43,5 +43,21 @@ class DvaSetaPodataka(unittest.TestCase):
         self.assertEqual(round(vlasnik.indeks(vrsta_goriva), 2), 9.59)
         self.assertEqual(vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva), u'2015-03-17 17:53:41')
 
+    def test_promijene_vrijednosti(self):
+        vrsta_goriva = 2
+        ina = self.vlasnici[6]
+
+        ocekivane_vrijednosti = [
+            [9.6683, u'2015-03-10 10:03:13', u'2015-03-10 10:03:13'],
+            [9.3155, u'2015-03-12 7:03:43', u'2015-03-12 7:03:43'],
+            [9.6683, u'2015-03-14 08:26:34', u'2015-03-17 17:53:41'],
+        ]
+
+        i = 0
+        for (indeks, start, end) in ina.promjene_vrijednosti(vrsta_goriva):
+            self.assertEqual([round(indeks, 4), start, end], ocekivane_vrijednosti[i])
+            i += 1
+        self.assertEqual(i, 3)      
+        
 if __name__ == '__main__':
     unittest.main()

@@ -172,6 +172,7 @@ class Vlasnik:
         self._ime = ime
         self._lista_postaja = []
         self._indeksi = {}
+        self._indeksi_historijat = []
         self._zadnja_promjena = {}
         self._cijene_sa_brojem_postaja = {}
         
@@ -260,6 +261,15 @@ class Vlasnik:
     def vrijeme_zadnjeg_upisa(self, vrsta_goriva):
         return self._zadnja_promjena[vrsta_goriva]
 
+    def promjene_vrijednosti(self, vrsta_goriva):
+        if not vrsta_goriva in self._indeksi_historijat:
+            return []
+
+        return self._indeksi_historijat[vrsta_goriva]
+
+    def dodaj_historijat(self, historijat):
+        self._indeksi_historijat = historijat
+        
 def gen_cijene_sa_vlasnicima(vlasnici):
     cijene_sa_vlasnicima = {}
     
@@ -306,19 +316,22 @@ class DatabaseConnection:
     def popuni_osnovne_tablice(self, vlasnici, datum = None):
         self.pisi_vlasnike(vlasnici, datum)
 
-    def popuni_tablice(self, vlasnici, datum = None):
-        self.pisi_indekse(vlasnici, datum)
+    def popuni_tablice(self, vlasnici, datum = None, stari_vlasnici = []):
+        self.pisi_indekse(stari_vlasnici, vlasnici, datum)
         self.pisi_cijene_s_postajama(vlasnici, datum)
 
     def pisi_nove_vrijednosti(self, citac, datum = None):
         vlasnici_citani = citac.gen_vlasnici_full()
 
+        stari_vlasnici = self.citaj_vrijednosti()
+
         self.popuni_osnovne_tablice(vlasnici_citani, datum)
-        self.popuni_tablice(vlasnici_citani, datum)
+        self.popuni_tablice(vlasnici_citani, datum, stari_vlasnici)
         
     def citaj_vrijednosti(self):
         vlasnici = self.citaj_vlasnike()
         vlasnici = self.citaj_indekse(vlasnici)
+        vlasnici = self.citaj_historijat_indeksa(vlasnici)
         vlasnici = self.citaj_cijene_s_postajama(vlasnici)
 
         return vlasnici
@@ -437,8 +450,13 @@ join (
                 cur.executemany("INSERT INTO vlasnici (vlasnik_id, vlasnik_ime) VALUES(?, ?)", vlasnici_za_upis)
             self.con.commit()
 
-    def pisi_indekse(self, vlasnici, datum = None):
+    def pisi_indekse(self, stari_vlasnici, vlasnici, datum = None):
         sortirani_vlasnici = sorted(vlasnici.values(), key=lambda v: v.ime())
+        if datum:
+            update_datum = datum
+        else:
+            update_datum = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
+
 
         with self.con:
 
@@ -446,15 +464,27 @@ join (
             cur = self.con.cursor()
 
             indeksi_za_upis = []
+            indeksi_za_update = []
             for vlasnik in sortirani_vlasnici:
                 for vrsta_goriva in vlasnik.vrste_goriva():
                     if vlasnik.nudi_gorivo(vrsta_goriva):
+                        if vlasnik.id() in stari_vlasnici:
+                            stari_vlasnik = stari_vlasnici[vlasnik.id()]
+                            if vlasnik.indeks(vrsta_goriva) == stari_vlasnik.indeks(vrsta_goriva):
+                                indeksi_za_update.append((
+                                    update_datum,
+                                    vlasnik.id(),
+                                    vrsta_goriva,
+                                    stari_vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva)
+                                ))
+                                continue
                         if datum:
                             indeksi_za_upis.append((
                                 vlasnik.id(),
                                 vrsta_goriva,
                                 vlasnik.broj_postaja(vrsta_goriva),
                                 vlasnik.indeks(vrsta_goriva),
+                                datum,
                                 datum
                             ))
                         else:
@@ -466,9 +496,11 @@ join (
                             ))
 
             if datum:
-                cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks, end_datetime) VALUES(?, ?, ?, ?, ?)", indeksi_za_upis)
+                cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks, start_datetime, end_datetime) VALUES(?, ?, ?, ?, ?, ?)", indeksi_za_upis)
+                cur.executemany("UPDATE indeksi SET end_datetime = ? WHERE vlasnik_id = ? and vrsta_goriva = ? and end_datetime = ?", indeksi_za_update)
             else:
                 cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
+                cur.executemany("UPDATE indeksi SET end_datetime = ? WHERE vlasnik_id = ? and vrsta_goriva = ? and end_datetime = ?", indeksi_za_update)
 
             self.con.commit()
         
@@ -557,6 +589,36 @@ join (
                     indeks,
                     datetime,
                 )
+
+        return vlasnici
+
+    def citaj_historijat_indeksa(self, vlasnici):
+        with self.con:
+
+            self.con.row_factory = lite.Row
+            cur = self.con.cursor()
+
+            vlasnik = None
+            historijat = {}
+
+            for (vlasnik_id, vrsta_goriva, indeks, start_datetime, end_datetime) in self.con.execute("""
+            select
+            vlasnik_id, vrsta_goriva, indeks, start_datetime, end_datetime
+            from indeksi
+            order by vlasnik_id, vrsta_goriva, start_datetime
+            """):
+                if not vlasnik:
+                    vlasnik = vlasnici[vlasnik_id]
+
+                if vlasnik.id() != vlasnik_id:
+                    if historijat:
+                        vlasnik.dodaj_historijat(historijat)
+                    historijat = {}
+                    vlasnik = vlasnici[vlasnik_id]
+
+                if not vrsta_goriva in historijat:
+                    historijat[vrsta_goriva] = []
+                historijat[vrsta_goriva].append((indeks, start_datetime, end_datetime))
 
         return vlasnici
 

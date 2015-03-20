@@ -132,13 +132,5 @@ class SQLTest(unittest.TestCase):
         self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-02-23 11:23:45')
         self.assertEqual(self.baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-02-23 11:23:45')
         
-    def test_vrijeme_zadnjeg_upisa_izoliran(self):
-        baza = DatabaseConnection('db.test-date.sqlite3')
-
-        self.assertEqual(baza.vrijeme_zadnjeg_upisa(), u'2015-03-17 11:53:24')
-        
-        self.assertEqual(baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 2), u'2015-03-17 11:53:24')
-        self.assertEqual(baza.vrijeme_zadnjeg_upisa(vrsta_goriva = 3), u'2015-03-16 05:39:07')
-        
 if __name__ == '__main__':
     unittest.main()

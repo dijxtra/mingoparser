@@ -332,7 +332,8 @@ vlasnik_id INT,
 vrsta_goriva INT,
 broj_postaja INT,
 indeks FLOAT,
-datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+start_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+end_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )""")
             self.con.commit()
         
@@ -361,7 +362,7 @@ select
 indeksi.rowid, indeksi.*
 from indeksi
 join (
-    select rowid, vlasnik_id, vrsta_goriva, max(datetime)
+    select rowid, vlasnik_id, vrsta_goriva, max(end_datetime)
     from indeksi
     group by vlasnik_id, vrsta_goriva
 ) filter
@@ -387,7 +388,7 @@ select
 indeksi_osim_najnovijih.*
 from indeksi_osim_najnovijih
 join (
-  select rowid, vlasnik_id, vrsta_goriva, max(datetime) maxdatetime
+  select rowid, vlasnik_id, vrsta_goriva, max(end_datetime) maxdatetime
   from indeksi_osim_najnovijih
   group by vlasnik_id, vrsta_goriva
 ) filter
@@ -452,7 +453,7 @@ join (
                             ))
 
             if datum:
-                cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks, datetime) VALUES(?, ?, ?, ?, ?)", indeksi_za_upis)
+                cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks, end_datetime) VALUES(?, ?, ?, ?, ?)", indeksi_za_upis)
             else:
                 cur.executemany("INSERT INTO indeksi (vlasnik_id, vrsta_goriva, broj_postaja, indeks) VALUES(?, ?, ?, ?)", indeksi_za_upis)
 
@@ -530,7 +531,7 @@ join (
 
             for (vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, datetime) in self.con.execute("""
             select
-            vlasnici.vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, najnoviji_indeksi.datetime
+            vlasnici.vlasnik_id, vlasnik_ime, vrsta_goriva, broj_postaja, indeks, najnoviji_indeksi.end_datetime
             from najnoviji_indeksi
             join vlasnici
             on najnoviji_indeksi.vlasnik_id = vlasnici.vlasnik_id
@@ -570,10 +571,10 @@ join (
             cur = self.con.cursor()
 
             if vrsta_goriva:
-                cur.execute("select max(datetime) maxdatetime from indeksi where vrsta_goriva = ?", (str(vrsta_goriva)))
+                cur.execute("select max(end_datetime) maxdatetime from indeksi where vrsta_goriva = ?", (str(vrsta_goriva)))
                 datetime = cur.fetchone()[0]
             else:
-                cur.execute("select max(datetime) maxdatetime from indeksi")
+                cur.execute("select max(end_datetime) maxdatetime from indeksi")
                 datetime = cur.fetchone()[0]
 
         return datetime

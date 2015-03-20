@@ -42,6 +42,7 @@ class CetiriSetaPodataka(unittest.TestCase):
         self.assertEqual(vlasnik.broj_postaja(vrsta_goriva), 8)
         self.assertEqual(round(vlasnik.indeks(vrsta_goriva), 2), 9.59)
         self.assertEqual(vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva), u'2015-03-17 17:53:41')
+        self.assertEqual(vlasnik.vrijeme_zadnje_promjene_cijene(vrsta_goriva), u'2015-03-14 08:26:34')
 
     def test_promijene_vrijednosti(self):
         vrsta_goriva = 2

@@ -173,7 +173,6 @@ class Vlasnik:
         self._lista_postaja = []
         self._indeksi = {}
         self._indeksi_historijat = []
-        self._zadnja_promjena = {}
         self._cijene_sa_brojem_postaja = {}
         
     def id(self):
@@ -255,12 +254,16 @@ class Vlasnik:
 
     def dodaj_indeks(self, vrsta_goriva, broj_postaja, indeks, datetime):
         self._indeksi[vrsta_goriva] = indeks
-        self._zadnja_promjena[vrsta_goriva] = datetime
 
     def vrijeme_zadnjeg_upisa(self, vrsta_goriva):
         if not vrsta_goriva in self._indeksi_historijat:
             return None
         return self._indeksi_historijat[vrsta_goriva][0][2]
+
+    def vrijeme_zadnje_promjene_cijene(self, vrsta_goriva):
+        if not vrsta_goriva in self._indeksi_historijat:
+            return None
+        return self._indeksi_historijat[vrsta_goriva][0][1]
 
     def promjene_vrijednosti(self, vrsta_goriva):
         if not vrsta_goriva in self._indeksi_historijat:

@@ -148,6 +148,7 @@ class DvaSetaPodataka(unittest.TestCase):
         self.assertEqual(vlasnik.broj_postaja(vrsta_goriva), 8)
         self.assertEqual(round(vlasnik.indeks(vrsta_goriva), 2), 9.22)
         self.assertEqual(vlasnik.vrijeme_zadnjeg_upisa(vrsta_goriva), u'2015-03-17 17:53:41')
+        self.assertEqual(vlasnik.vrijeme_zadnje_promjene_cijene(vrsta_goriva), u'2015-03-17 17:53:41')
 
 if __name__ == '__main__':
     unittest.main()

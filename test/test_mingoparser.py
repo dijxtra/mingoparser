@@ -11,13 +11,10 @@ class SQLTest(unittest.TestCase):
         self.baza.kreiraj_tablice()
 
         citac = CitacVrijednostiOffline('inputs/')
-        self.vlasnici_citani = citac.gen_vlasnici_full()
-        self.baza.popuni_osnovne_tablice(self.vlasnici_citani, '2015-02-23 11:23:45')
-        self.baza.popuni_tablice(self.vlasnici_citani, '2015-02-23 11:23:45')
+        self.baza.pisi_nove_vrijednosti(citac, datum = '2015-02-23 11:23:45')
         
-        self.vlasnici = self.baza.citaj_vlasnike()
-        self.vlasnici = self.baza.citaj_indekse(self.vlasnici)
-        self.vlasnici = self.baza.citaj_cijene_s_postajama(self.vlasnici)
+        self.vlasnici = self.baza.citaj_vrijednosti()
+        self.vlasnici_citani = citac.gen_vlasnici_full()
 
     def test_cijene_sa_brojem_postaja(self):
         vlasnik_sql = self.vlasnici[5]
@@ -56,9 +53,7 @@ class SQLTest(unittest.TestCase):
         self.baza.popuni_tablice(self.vlasnici_citani)
         self.baza.popuni_tablice(self.vlasnici_citani)
 
-        self.vlasnici = self.baza.citaj_vlasnike()
-        self.vlasnici = self.baza.citaj_indekse(self.vlasnici)
-        self.vlasnici = self.baza.citaj_cijene_s_postajama(self.vlasnici)
+        self.vlasnici = self.baza.citaj_vrijednosti()
 
         self.test_prolaz_kroz_bazu()
 

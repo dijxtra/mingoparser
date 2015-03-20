@@ -11,28 +11,18 @@ class DvaSetaPodataka(unittest.TestCase):
         self.baza.kreiraj_tablice()
 
         citac = CitacVrijednostiOffline('inputs2/')
-        vlasnici_citani = citac.gen_vlasnici_full()
-        self.baza.popuni_osnovne_tablice(vlasnici_citani, '2015-03-10 10:03:13')
-        self.baza.popuni_tablice(vlasnici_citani, '2015-03-10 10:03:13')
+        self.baza.pisi_nove_vrijednosti(citac, '2015-03-10 10:03:13')
 
         citac = CitacVrijednostiOffline('inputs/')
-        vlasnici_citani = citac.gen_vlasnici_full()
-        self.baza.popuni_osnovne_tablice(vlasnici_citani, '2015-03-12 7:03:43')
-        self.baza.popuni_tablice(vlasnici_citani, '2015-03-12 7:03:43')        
+        self.baza.pisi_nove_vrijednosti(citac, '2015-03-12 7:03:43')
 
         citac = CitacVrijednostiOffline('inputs2/')
-        vlasnici_citani = citac.gen_vlasnici_full()
-        self.baza.popuni_osnovne_tablice(vlasnici_citani, '2015-03-14 08:26:34')
-        self.baza.popuni_tablice(vlasnici_citani, '2015-03-14 08:26:34')        
+        self.baza.pisi_nove_vrijednosti(citac, '2015-03-14 08:26:34')
 
         citac = CitacVrijednostiOffline('inputs2/')
-        vlasnici_citani = citac.gen_vlasnici_full()
-        self.baza.popuni_osnovne_tablice(vlasnici_citani, '2015-03-17 17:53:41')
-        self.baza.popuni_tablice(vlasnici_citani, '2015-03-17 17:53:41')        
+        self.baza.pisi_nove_vrijednosti(citac, '2015-03-17 17:53:41')
         
-        self.vlasnici = self.baza.citaj_vlasnike()
-        self.vlasnici = self.baza.citaj_indekse(self.vlasnici)
-        self.vlasnici = self.baza.citaj_cijene_s_postajama(self.vlasnici)
+        self.vlasnici = self.baza.citaj_vrijednosti()
 
 
     def test_vrijeme_zadnjeg_upisa(self):

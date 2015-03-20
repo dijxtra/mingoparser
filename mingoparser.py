@@ -310,6 +310,19 @@ class DatabaseConnection:
         self.pisi_indekse(vlasnici, datum)
         self.pisi_cijene_s_postajama(vlasnici, datum)
 
+    def pisi_nove_vrijednosti(self, citac, datum = None):
+        vlasnici_citani = citac.gen_vlasnici_full()
+
+        self.popuni_osnovne_tablice(vlasnici_citani, datum)
+        self.popuni_tablice(vlasnici_citani, datum)
+        
+    def citaj_vrijednosti(self):
+        vlasnici = self.citaj_vlasnike()
+        vlasnici = self.citaj_indekse(vlasnici)
+        vlasnici = self.citaj_cijene_s_postajama(vlasnici)
+
+        return vlasnici
+
     def kreiraj_tablicu_vlasnika(self):
         with self.con:
             cur = self.con.cursor()    

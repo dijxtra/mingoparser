@@ -6,15 +6,19 @@ from mingoparser import *
 class DvaSetaPodataka(unittest.TestCase):
     """Testiranje aplikacije sa dva različita seta podataka odjednom."""
 
-    def setUp(self):
-        self.baza = DatabaseConnection('db.test.sqlite3')
-        self.baza.kreiraj_tablice()
+    @classmethod
+    def setUpClass(cls):
+        baza = DatabaseConnection('db.test.sqlite3')
+        baza.kreiraj_tablice()
 
         citac = CitacVrijednostiOffline('inputs2/')
-        self.baza.pisi_nove_vrijednosti(citac, datum = '2015-03-10 10:03:13')
+        baza.pisi_nove_vrijednosti(citac, datum = '2015-03-10 10:03:13')
 
         citac = CitacVrijednostiOffline('inputs/')
-        self.baza.pisi_nove_vrijednosti(citac, datum = '2015-03-17 17:53:41')
+        baza.pisi_nove_vrijednosti(citac, datum = '2015-03-17 17:53:41')
+
+    def setUp(self):
+        self.baza = DatabaseConnection('db.test.sqlite3')
         
         self.vlasnici = self.baza.citaj_vrijednosti()
 

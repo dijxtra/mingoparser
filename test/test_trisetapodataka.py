@@ -6,7 +6,8 @@ from mingoparser import *
 class CetiriSetaPodataka(unittest.TestCase):
     """Testiranje aplikacije sa dva različita seta podataka odjednom."""
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.baza = DatabaseConnection('db.test.sqlite3')
         self.baza.kreiraj_tablice()
 
@@ -21,7 +22,9 @@ class CetiriSetaPodataka(unittest.TestCase):
 
         citac = CitacVrijednostiOffline('inputs2/')
         self.baza.pisi_nove_vrijednosti(citac, '2015-03-17 17:53:41')
-        
+
+    def setUp(self):
+        self.baza = DatabaseConnection('db.test.sqlite3')
         self.vlasnici = self.baza.citaj_vrijednosti()
 
 
